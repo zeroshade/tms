@@ -21,11 +21,12 @@
 
 <script lang='ts'>
 import { Component, Vue } from 'vue-property-decorator';
-import { Getter } from 'vuex-class';
+import { Getter, Action } from 'vuex-class';
 import Product from '@/api/product';
 
 @Component
 export default class Home extends Vue {
+  @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Getter('product/products') public prods!: Product[];
 
   public headers = [
@@ -52,5 +53,9 @@ export default class Home extends Vue {
       sortable: false,
     },
   ];
+
+  public async created() {
+    await this.loadProducts();
+  }
 }
 </script>

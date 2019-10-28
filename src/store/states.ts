@@ -17,9 +17,9 @@ export interface CartItem {
   id: string;
   ei: EventInfo;
   date: Date;
-  numAdult: number;
-  numChild: number;
-  numSenior: number;
+  categories: {
+    [category: string]: number;
+  };
 }
 
 export interface ShoppingCartState {

@@ -39,7 +39,7 @@
             <v-select label='Price Set' class='ml-1'
               :rules='[(v) => v.length > 0 || "Must Pick One"]'
               dense style='margin-top: -12px' v-model='sched.timeArray[idx].price'
-              :items='["Price 1", "Price 2"]' />
+              :items='categories.map((c) => c.name)' />
           </v-flex>
           <v-flex xs1 :key='`close-${idx}`'>
             <v-btn fab bottom right small flat @click='sched.timeArray.splice(idx, 1)'>
@@ -74,9 +74,11 @@
 
 <script lang='ts'>
 import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Getter } from 'vuex-class';
 import { Schedule } from '@/api/product';
 import DateInput from '@/components/DateInput.vue';
 import TimeInput from '@/components/TimeInput.vue';
+import TicketCategory from '@/api/tickets';
 
 @Component({
   components: {
@@ -85,6 +87,7 @@ import TimeInput from '@/components/TimeInput.vue';
   },
 })
 export default class EditSchedule extends Vue {
+  @Getter('tickets/categories') public readonly categories!: TicketCategory[];
   @Prop(Object) public sched!: Schedule;
 
   public showErrors = false;

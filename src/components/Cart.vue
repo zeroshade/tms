@@ -26,7 +26,7 @@
                   :rules='[(v) => Number(v) >= 0 || "Needs to be >= 0"]'
                   min='0'
                   type='number'
-                  v-model='item.numAdult' /> x ${{ getPrices(item.ei.price).adult.toFixed(2) }}
+                  v-model='item.categories.adult' /> x ${{ Number(getPrices(item.ei.price).categories.adult).toFixed(2) }}
               </span>
               <span>
                 <v-text-field
@@ -36,9 +36,9 @@
                   style='width: 75px'
                   min='0'
                   type='number'
-                  v-model='item.numChild' /> x ${{ getPrices(item.ei.price).child.toFixed(2) }}
+                  v-model='item.categories.child' /> x ${{ Number(getPrices(item.ei.price).categories.child).toFixed(2) }}
               </span>
-              <span v-if='getPrices(item.ei.price).senior > 0'>
+              <span v-if='getPrices(item.ei.price).categories.senior > 0'>
                 <v-text-field
                   class='d-inline-flex'
                   label='Senior Tickets'
@@ -46,20 +46,20 @@
                   min='0'
                   style='width: 75px'
                   type='number'
-                  v-model='item.numSenior' /> x ${{ getPrices(item.ei.price).senior.toFixed(2) }}
+                  v-model='item.categories.senior' /> x ${{ Number(getPrices(item.ei.price).categories.senior).toFixed(2) }}
               </span>
             </td>
             <td width='200px'>
-              <p>Adult Tickets: ${{ (item.numAdult * getPrices(item.ei.price).adult).toFixed(2) }}</p>
-              <p>Child Tickets: ${{ (item.numChild * getPrices(item.ei.price).child).toFixed(2) }}</p>
-              <p v-if='getPrices(item.ei.price).senior > 0'>
-                Senior Tickets: ${{ (item.numSenior * getPrices(item.ei.price).senior).toFixed(2) }}
+              <p>Adult Tickets: ${{ (item.categories.adult * Number(getPrices(item.ei.price).categories.adult)).toFixed(2) }}</p>
+              <p>Child Tickets: ${{ (item.categories.child * Number(getPrices(item.ei.price).categories.child)).toFixed(2) }}</p>
+              <p v-if='getPrices(item.ei.price).categories.senior > 0'>
+                Senior Tickets: ${{ (item.categories.senior * Number(getPrices(item.ei.price).categories.senior)).toFixed(2) }}
               </p>
             </td>
             <td>
-              ${{ (item.numAdult * getPrices(item.ei.price).adult +
-                  item.numChild * getPrices(item.ei.price).child +
-                  item.numSenior * getPrices(item.ei.price).senior).toFixed(2) }}
+              ${{ (item.categories.adult * Number(getPrices(item.ei.price).categories.adult) +
+                  item.categories.child * Number(getPrices(item.ei.price).categories.child) +
+                  item.categories.senior * Number(getPrices(item.ei.price).categories.senior)).toFixed(2) }}
             </td>
             <td><v-btn small icon @click='removeFromCart(item.id)'><v-icon>close</v-icon></v-btn></td>
           </template>
@@ -135,32 +135,16 @@ export default class Cart extends Vue {
       const prod = val.ei.name + ', ' + val.date.toLocaleDateString('en-US', {
                 year: 'numeric', month: '2-digit', day: 'numeric',
                 hour: 'numeric', minute: 'numeric' });
-      if (val.numAdult) {
-        ret.push({
-          name: 'Adult Ticket, ' + prod,
-          description: '',
-          quantity: val.numAdult.toString(),
-          price: priceCat.adult.toFixed(2),
-          currency: 'USD',
-        });
-      }
-      if (val.numChild) {
-        ret.push({
-          name: 'Child Ticket, ' + prod,
-          description: '',
-          quantity: val.numChild.toString(),
-          price: priceCat.child.toFixed(2),
-          currency: 'USD',
-        });
-      }
-      if (val.numSenior) {
-        ret.push({
-          name: 'Senior Ticket, ' + prod,
-          description: '',
-          quantity: val.numSenior.toString(),
-          price: priceCat.senior.toFixed(2),
-          currency: 'USD',
-        });
+      for (const key of Object.keys(val.categories)) {
+        if (val.categories[key]) {
+          ret.push({
+            name: key[0].toUpperCase() + key.slice(1) + ' Ticket, ' + prod,
+            description: '',
+            quantity: val.categories[key].toString(),
+            price: Number(priceCat.categories[key]).toFixed(2),
+            currency: 'USD',
+          });
+        }
       }
     });
     return ret;
@@ -171,9 +155,9 @@ export default class Cart extends Vue {
       const prices = this.getPrices(curr.ei.price);
       if (prices === null) { return total; }
 
-      total += curr.numAdult * prices.adult;
-      total += curr.numChild * prices.child;
-      total += curr.numSenior * prices.senior;
+      for (const key of Object.keys(curr.categories)) {
+        total += curr.categories[key] * Number(prices.categories[key]);
+      }
       return total;
     }, 0);
   }

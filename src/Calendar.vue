@@ -24,7 +24,7 @@
                   v-ripple class='event' :style='{backgroundColor: ei.color, borderColor: ei.color }'
                   :key='`${ei.id}-${ei.time}`'
                   @click='addToCart(ei, date)'>
-                  {{ ei.name }} - {{ formatTime(date, ei.time) }}
+                  {{ formatTime(date, ei.time) }} - {{ ei.name }}
                 </div>
               </template>
             </template>
@@ -50,6 +50,7 @@ import Cart from '@/components/Cart.vue';
 })
 export default class Calendar extends Vue {
   @Getter('product/products') public prods!: Product[];
+  @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Action('cart/addCartItem') public addCartItem!: (payload: {ei: EventInfo, date: string}) => void;
 
   public readonly calendarHeight = process.env.VUE_APP_CALENDAR_HEIGHT;
@@ -57,6 +58,10 @@ export default class Calendar extends Vue {
   public start = '';
   public showCart = false;
   public showFinal = false;
+
+  public async created() {
+    await this.loadProducts();
+  }
 
   public mounted() {
     const today = new Date();

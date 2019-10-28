@@ -56,9 +56,11 @@ export default class TimeInput extends Vue {
     const [strhour, strmin] = time.split(':');
     let amOrPm = 'AM';
     let hour = +strhour;
-    if (hour > 12) {
+    if (hour >= 12) {
       amOrPm = 'PM';
-      hour = hour - 12;
+      if (hour !== 12) {
+        hour = hour - 12;
+      }
     } else if (hour === 0) {
       hour = 12;
     }

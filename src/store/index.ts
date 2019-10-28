@@ -2,8 +2,8 @@ import Vue from 'vue';
 import Vuex, { Module } from 'vuex';
 import { RootState, ProductState, TicketState } from './states';
 import CartModule from './cart';
-import Product from '@/api/product';
-import TicketCategory from '@/api/tickets';
+import Product, { getProducts, putProduct } from '@/api/product';
+import TicketCategory, { saveCategories } from '@/api/tickets';
 
 Vue.use(Vuex);
 
@@ -11,16 +11,20 @@ const sampleTicketCats: TicketCategory[] = [
   {
     id: 0,
     name: 'Price 2',
-    child: 52.0,
-    adult: 100.0,
-    senior: 0,
+    categories: {
+      child: '52.0',
+      adult: '100.0',
+      senior: '0',
+    },
   },
   {
     id: 1,
     name: 'Price 1',
-    child: 40.0,
-    adult: 60.0,
-    senior: 40.0,
+    categories: {
+      child: '40.0',
+      adult: '60.0',
+      senior: '40.0',
+    },
   },
 ];
 
@@ -88,6 +92,9 @@ const ticketModule: Module<TicketState, RootState> = {
     },
   },
   mutations: {
+    saveCategories(state: TicketState, cats: TicketCategory[]) {
+      state.categoryList = cats;
+    },
     updateCategory(state: TicketState, cat: TicketCategory) {
       const idx = state.categoryList.findIndex((c) => c.id === cat.id);
       if (idx !== -1) {
@@ -100,9 +107,11 @@ const ticketModule: Module<TicketState, RootState> = {
       state.categoryList.push({
         id: Math.max.apply(Math, state.categoryList.map((o) => o.id)) + 1,
         name: 'Temp',
-        adult: 0.00,
-        child: 0.00,
-        senior: 0.00,
+        categories: {
+          adult: '0.00',
+          child: '0.00',
+          senior: '0.00',
+        },
       });
     },
     removeCategory(state: TicketState, id: number) {
@@ -113,8 +122,9 @@ const ticketModule: Module<TicketState, RootState> = {
     },
   },
   actions: {
-    async saveCategory({commit, dispatch}, cat: TicketCategory) {
-      commit('updateCategory', cat);
+    async saveCategories({commit, dispatch}, cats: TicketCategory[]) {
+      await saveCategories(cats);
+      commit('saveCategories', cats);
     },
     async deleteCategory({commit}, id: number) {
       commit('removeCategory', id);
@@ -125,7 +135,7 @@ const ticketModule: Module<TicketState, RootState> = {
 const productModule: Module<ProductState, RootState> = {
   namespaced: true,
   state: {
-    productList: sampleProds,
+    productList: [],
   },
   getters: {
     products(state) {
@@ -137,6 +147,9 @@ const productModule: Module<ProductState, RootState> = {
     },
   },
   mutations: {
+    setProducts(state: ProductState, prods: Product[]) {
+      state.productList = prods;
+    },
     updateProd(state: ProductState, prod: Product) {
       const idx = state.productList.findIndex((p) => p.id === prod.id);
       if (idx !== -1) {
@@ -148,7 +161,11 @@ const productModule: Module<ProductState, RootState> = {
   },
   actions: {
     async saveProduct({commit, dispatch}, prod: Product) {
+      await putProduct(prod);
       commit('updateProd', prod);
+    },
+    async loadProducts({commit, dispatch}) {
+      commit('setProducts', await getProducts());
     },
   },
 };

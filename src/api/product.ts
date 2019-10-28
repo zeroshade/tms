@@ -29,3 +29,20 @@ type Product = PInfo & PData;
 export default Product;
 
 export type EventInfo = PInfo & ScheduleTime;
+
+export async function getProducts(): Promise<Product[]> {
+  const response = await fetch(process.env.VUE_APP_BACKEND_HOST + '/');
+  return await response.json();
+}
+
+export async function putProduct(p: Product) {
+  const response = await fetch(process.env.VUE_APP_BACKEND_HOST + '/product', {
+    method: 'PUT',
+    mode: 'cors',
+    cache: 'no-cache',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(p),
+  });
+}

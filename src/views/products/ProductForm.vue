@@ -135,10 +135,10 @@ export default class ProductForm extends Vue {
     return (this.$refs.edit as EditSchedule[]).reduce((cur: boolean, e: EditSchedule) => cur && e.validate(), true);
   }
 
-  public save() {
+  public async save() {
     if ((this.$refs.form as HTMLFormElement).validate() && this.validateSchedList()) {
       const {id, name, desc, publish, color, showTickets, schedList} = this;
-      this.saveProduct({id, name, desc, color, publish, showTickets, schedList});
+      await this.saveProduct({id, name, desc, color, publish, showTickets, schedList});
       this.$router.push({name: 'home'});
     }
   }
@@ -153,7 +153,6 @@ export default class ProductForm extends Vue {
       ticketsAvail: 50,
     });
   }
-
 
   private loadProd(p: Product) {
     this.name = p.name;
