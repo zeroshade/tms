@@ -7,7 +7,7 @@ module.exports = {
     },
     calendar: {
       entry: 'src/cal.ts',
-      template: 'public/index.html',
+      template: 'public/calendar.html',
       filename: 'calendar/index.html',
     }
   }

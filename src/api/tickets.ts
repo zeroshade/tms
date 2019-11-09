@@ -1,3 +1,5 @@
+import { BASEURL } from './utils';
+
 export default interface TicketCategory {
   id: number;
   name: string;
@@ -7,7 +9,7 @@ export default interface TicketCategory {
 }
 
 export async function saveCategories(tc: TicketCategory[]) {
-  const response = await fetch(process.env.VUE_APP_BACKEND_HOST + '/tickets', {
+  const response = await fetch(BASEURL + '/tickets', {
     method: 'PUT',
     mode: 'cors',
     cache: 'no-cache',

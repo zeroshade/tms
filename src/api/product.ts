@@ -1,8 +1,11 @@
+import { BASEURL } from './utils';
+
 interface PInfo {
   id: number;
   name: string;
   desc: string;
   color: string;
+  showTickets: boolean;
 }
 
 export interface ScheduleTime {
@@ -21,7 +24,6 @@ export interface Schedule {
 
 interface PData {
   publish: boolean;
-  showTickets: boolean;
   schedList: Schedule[];
 }
 
@@ -31,12 +33,12 @@ export default Product;
 export type EventInfo = PInfo & ScheduleTime;
 
 export async function getProducts(): Promise<Product[]> {
-  const response = await fetch(process.env.VUE_APP_BACKEND_HOST + '/');
+  const response = await fetch(BASEURL + '/');
   return await response.json();
 }
 
 export async function putProduct(p: Product) {
-  const response = await fetch(process.env.VUE_APP_BACKEND_HOST + '/product', {
+  const response = await fetch(BASEURL + '/product', {
     method: 'PUT',
     mode: 'cors',
     cache: 'no-cache',

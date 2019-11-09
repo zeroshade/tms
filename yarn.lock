@@ -1159,11 +1159,6 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-Base64@^1.0.0:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/Base64/-/Base64-1.0.2.tgz#82a36d43f4b98659d72488afe008a905d2cbccdb"
-  integrity sha512-WufIun24IbKXKBCGmxau2cYAaGLJ1GJjXcqTUyUzYiQImCreWwvTagnZd9k3nHGPAdPxpvC+4FNN1OhQH2Vz7g==
-
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"
@@ -1536,22 +1531,6 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
-beaver-logger@^3.0.17, beaver-logger@^3.0.6:
-  version "3.0.19"
-  resolved "https://registry.yarnpkg.com/beaver-logger/-/beaver-logger-3.0.19.tgz#1d9d95ec67acb62c70cde0a284395a6e07e6ca79"
-  integrity sha512-hfBwPUD8PeE6mFSTtWAYd/wI8AzaoeRGNIpWGZWJGZBLyl7Fb7n6PL33JujUzWKWDsIi9V3HoppqIyM/CeeSnw==
-  dependencies:
-    zalgo-promise "^1.0.26"
-
-belter@^1.0.77, belter@^1.0.96:
-  version "1.0.110"
-  resolved "https://registry.yarnpkg.com/belter/-/belter-1.0.110.tgz#0407f2595258039feb19d8e899abdca884f901ea"
-  integrity sha512-bEoTOmK1JgVTvCgrY0PouVCEqrBq5yxbTMVY2Gwe7kNeocvOirnS0B8Tz6xLzKMkZNLsxjJCCqrGcxEWdlpv8g==
-  dependencies:
-    cross-domain-safe-weakmap "^1.0.20"
-    cross-domain-utils "^2.0.10"
-    zalgo-promise "^1.0.28"
-
 bfj@^6.1.1:
   version "6.1.2"
   resolved "https://registry.yarnpkg.com/bfj/-/bfj-6.1.2.tgz#325c861a822bcb358a41c78a33b8e6e2086dde7f"
@@ -1619,11 +1598,6 @@ boolbase@^1.0.0, boolbase@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/boolbase/-/boolbase-1.0.0.tgz#68dff5fbe60c51eb37725ea9e3ed310dcc1e776e"
   integrity sha1-aN/1++YMUes3cl6p4+0xDcwed24=
-
-bowser@^1.7.1:
-  version "1.9.4"
-  resolved "https://registry.yarnpkg.com/bowser/-/bowser-1.9.4.tgz#890c58a2813a9d3243704334fa81b96a5c150c9a"
-  integrity sha512-9IdMmj2KjigRq6oWhmwv1W36pDuA4STQZ8q6YO9um+x07xgYNCD3Oou+WP/3L1HNz7iqythGet3/p4wvc8AAwQ==
 
 brace-expansion@^1.1.7:
   version "1.1.11"
@@ -2303,20 +2277,6 @@ create-hmac@^1.1.0, create-hmac@^1.1.2, create-hmac@^1.1.4:
     ripemd160 "^2.0.0"
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
-
-cross-domain-safe-weakmap@^1.0.1, cross-domain-safe-weakmap@^1.0.20, cross-domain-safe-weakmap@^1.0.22:
-  version "1.0.27"
-  resolved "https://registry.yarnpkg.com/cross-domain-safe-weakmap/-/cross-domain-safe-weakmap-1.0.27.tgz#81a5eae012b3cfb7e7e5ca3d737a6c94c3499bab"
-  integrity sha512-f5etDzszteeGh99Dzd7o72FGwd8rLGzgEv50Vk0r8mLzPdQEzcb7Vmx3PfKWD4k66Hp8vN0BLPuBmmMs4UxseQ==
-  dependencies:
-    cross-domain-utils "^2.0.0"
-
-cross-domain-utils@^2.0.0, cross-domain-utils@^2.0.1, cross-domain-utils@^2.0.10, cross-domain-utils@^2.0.16:
-  version "2.0.29"
-  resolved "https://registry.yarnpkg.com/cross-domain-utils/-/cross-domain-utils-2.0.29.tgz#f531cb8929427ba0a081d2037651dd7b02e7fcea"
-  integrity sha512-Kb0Mgtmo7OIN4QuIYuWNe63pxq9DnlyyzzALcHUPg8zVJIP5QFOGuTe5KgnlyLAx4IxckD6661WaawjSkuTvUA==
-  dependencies:
-    zalgo-promise "^1.0.11"
 
 cross-spawn@^5.0.1:
   version "5.1.0"
@@ -3387,11 +3347,6 @@ form-data@~2.3.2:
     combined-stream "^1.0.6"
     mime-types "^2.1.12"
 
-form-serialize@^0.7.2:
-  version "0.7.2"
-  resolved "https://registry.yarnpkg.com/form-serialize/-/form-serialize-0.7.2.tgz#b0a2ff0c22026fb6d3d15c9d33f6de6a432e4732"
-  integrity sha1-sKL/DCICb7bT0VydM/beakMuRzI=
-
 formidable@^1.2.0:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/formidable/-/formidable-1.2.1.tgz#70fb7ca0290ee6ff961090415f4b3df3d2082659"
@@ -3723,11 +3678,6 @@ hex-color-regex@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/hex-color-regex/-/hex-color-regex-1.1.0.tgz#4c06fccb4602fe2602b3c93df82d7e7dbf1a8a8e"
   integrity sha512-l9sfDFsuqtOqKDsQdqrMRk0U85RZc0RtOR9yPI7mRVOa4FsR/BVnZ0shmQRM96Ji99kYZP/7hn1cedc1+ApsTQ==
-
-hi-base32@^0.5.0:
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/hi-base32/-/hi-base32-0.5.0.tgz#61329f76a31f31008533f1c36f2473e259d64571"
-  integrity sha512-DDRmxSyoYuvjUb9EnXdoiMChBZ7ZcUVJsK5Frd3kqMhuBxvmZdnBeynAVfj7/ECbn++CekcoprvC/rprHPAtow==
 
 highlight.js@^9.6.0:
   version "9.15.10"
@@ -5644,22 +5594,6 @@ path-type@^3.0.0:
   dependencies:
     pify "^3.0.0"
 
-paypal-checkout@^4.0.228:
-  version "4.0.299"
-  resolved "https://registry.yarnpkg.com/paypal-checkout/-/paypal-checkout-4.0.299.tgz#00bc510564ecbf79694ca8f38cc31c6f7cf53ff7"
-  integrity sha512-3AvQDHu2CpwJCJv+d5VQj+wrXcX7cl3bclTxdhjii1N6MCt4oGN3eI1vahA87zZfEbUG5xGld8RDqeqrXktU+g==
-  dependencies:
-    Base64 "^1.0.0"
-    beaver-logger "^3.0.6"
-    belter "^1.0.96"
-    bowser "^1.7.1"
-    cross-domain-utils "^2.0.1"
-    form-serialize "^0.7.2"
-    hi-base32 "^0.5.0"
-    post-robot "^8.0.0"
-    zalgo-promise "^1.0.10"
-    zoid "^6.0.67"
-
 pbkdf2@^3.0.3:
   version "3.0.17"
   resolved "https://registry.yarnpkg.com/pbkdf2/-/pbkdf2-3.0.17.tgz#976c206530617b14ebb32114239f7b09336e93a6"
@@ -5737,15 +5671,6 @@ posix-character-classes@^0.1.0:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/posix-character-classes/-/posix-character-classes-0.1.1.tgz#01eac0fe3b5af71a2a6c02feabb8c1fef7e00eab"
   integrity sha1-AerA/jta9xoqbAL+q7jB/vfgDqs=
-
-post-robot@^8.0.0, post-robot@^8.0.29:
-  version "8.0.30"
-  resolved "https://registry.yarnpkg.com/post-robot/-/post-robot-8.0.30.tgz#5aac91bb996751549a3c273507b6448a293f6c1f"
-  integrity sha512-xo4TudIX85q2vKehlGcVlbYJyrG+2CU+s5zXDpxAba8RzjGPAT2GXpCzNI2TDaiB+UH1Y/rgSNC9tKSyVNwW8g==
-  dependencies:
-    cross-domain-safe-weakmap "^1.0.1"
-    cross-domain-utils "^2.0.0"
-    zalgo-promise "^1.0.3"
 
 postcss-calc@^7.0.1:
   version "7.0.1"
@@ -7522,9 +7447,9 @@ typedarray@^0.0.6:
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
 typescript@^3.4.3:
-  version "3.6.4"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.6.4.tgz#b18752bb3792bc1a0281335f7f6ebf1bbfc5b91d"
-  integrity sha512-unoCll1+l+YK4i4F8f22TaNVPRHcD9PA3yCuZ8g5e0qGqlVlJ/8FSateOLLSagn+Yg5+ZwuPkL8LFUc0Jcvksg==
+  version "3.7.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.2.tgz#27e489b95fa5909445e9fef5ee48d81697ad18fb"
+  integrity sha512-ml7V7JfiN2Xwvcer+XAf2csGO1bPBdRbFCkYBczNZggrBZ9c7G3riSUeJmqEU5uOtXNPMhE3n+R4FA/3YOAWOQ==
 
 uglify-js@3.4.x:
   version "3.4.10"
@@ -7788,15 +7713,6 @@ vue-loader@^15.7.0:
     vue-hot-reload-api "^2.3.0"
     vue-style-loader "^4.1.0"
 
-vue-paypal-checkout@^3.2.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/vue-paypal-checkout/-/vue-paypal-checkout-3.2.0.tgz#c5a2ac0fd295dcbf99b3a3c44b870c9e4859a96e"
-  integrity sha512-y7Fz60ePTr6rMHGVu5S+6kDZTl5x3+Wh2DV0E4V1ibc3z4YJ8gw18PxMOt34FexYs5621F5C/9MF30TiSoDXBg==
-  dependencies:
-    babel-runtime "^6.26.0"
-    paypal-checkout "^4.0.228"
-    vue "^2.5.17"
-
 vue-property-decorator@^8.1.0:
   version "8.3.0"
   resolved "https://registry.yarnpkg.com/vue-property-decorator/-/vue-property-decorator-8.3.0.tgz#536f027dc7d626f37c8d85a2dc02f0a6cb979440"
@@ -7830,7 +7746,7 @@ vue-template-es2015-compiler@^1.9.0:
   resolved "https://registry.yarnpkg.com/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.9.1.tgz#1ee3bc9a16ecbf5118be334bb15f9c46f82f5825"
   integrity sha512-4gDntzrifFnCEvyoO8PqyJDmguXgVPxKiIxrBKjIowvL9l+N66196+72XVYR8BBf1Uv1Fgt3bGevJ+sEmxfZzw==
 
-vue@^2.5.17, vue@^2.6.10:
+vue@^2.6.10:
   version "2.6.10"
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.6.10.tgz#a72b1a42a4d82a721ea438d1b6bf55e66195c637"
   integrity sha512-ImThpeNU9HbdZL3utgMCq0oiMzAkt1mcgy3/E6zWC/G6AaQoeuFdsl9nDhTDU3X1R6FK7nsIUuRACVcjI+A2GQ==
@@ -7843,9 +7759,9 @@ vuetify-loader@^1.0.5:
     loader-utils "^1.2.0"
 
 vuetify@^1.5.5:
-  version "1.5.19"
-  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-1.5.19.tgz#9b7487ec8f1ca4fa8539bdab57b4ddf8fcb86d6e"
-  integrity sha512-GbLWPtiYUaYhnP68GteqT79FxIrAKRF3ZPvvm4a1jEZ5FJDmLlM8eJLB37ppsUys/U/z88g3AtdVvc++gHKzCQ==
+  version "1.5.20"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-1.5.20.tgz#0bf44778a4ad4b52d4bd2097a53d65043c4ae1b3"
+  integrity sha512-tky4uV8vNfQ+3bVo4oI5cVVxa8uGbToFXbbAUoxw7/ckWv16ef+NGYa5quDGAqqshS/D3qdAn/+yy4C/rTbR+Q==
 
 vuex-class@^0.3.2:
   version "0.3.2"
@@ -8301,21 +8217,3 @@ yorkie@^2.0.0:
     is-ci "^1.0.10"
     normalize-path "^1.0.0"
     strip-indent "^2.0.0"
-
-zalgo-promise@^1.0.10, zalgo-promise@^1.0.11, zalgo-promise@^1.0.26, zalgo-promise@^1.0.28, zalgo-promise@^1.0.3, zalgo-promise@^1.0.34:
-  version "1.0.44"
-  resolved "https://registry.yarnpkg.com/zalgo-promise/-/zalgo-promise-1.0.44.tgz#10b6888def701abc0681ec760d73e2bfd2448ae2"
-  integrity sha512-CSQ1xh0vVwgrohObNdysPANonBV+3yl1Xy+qrtMWBvb/a0D/2OUNqb0GJvaAgGtP/gQawtiQAFil2bGSq8aoMA==
-
-zoid@^6.0.67:
-  version "6.0.77"
-  resolved "https://registry.yarnpkg.com/zoid/-/zoid-6.0.77.tgz#103fe01e44081c7eaa97f0da5050a02fda60b99c"
-  integrity sha512-NxLfIF0xSQvPzwJbhiGrJRmmGTgd2Zb/7e5OIv3J7XAG10fSG0e+eK1fjV3nbbJQ2Kuy5Uk8kRX0/0/RWt4WVg==
-  dependencies:
-    beaver-logger "^3.0.17"
-    belter "^1.0.77"
-    cross-domain-safe-weakmap "^1.0.22"
-    cross-domain-utils "^2.0.16"
-    hi-base32 "^0.5.0"
-    post-robot "^8.0.29"
-    zalgo-promise "^1.0.34"

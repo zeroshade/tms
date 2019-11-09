@@ -40,7 +40,7 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { Getter, Action } from 'vuex-class';
 import Product, { EventInfo } from '@/api/product';
-import { PaymentEvent } from '@/api/paypal';
+import { OrderDetails } from '@/api/paypal';
 import Cart from '@/components/Cart.vue';
 
 @Component({
@@ -82,7 +82,7 @@ export default class Calendar extends Vue {
     return new Date(this.start + ' EST').toLocaleString('en-US', {month: 'long', year: 'numeric'});
   }
 
-  public checkedOut(event: PaymentEvent) {
+  public checkedOut(event: OrderDetails) {
     console.log(event);
   }
 
@@ -98,8 +98,8 @@ export default class Calendar extends Vue {
           continue;
         }
 
-        const {id, name, desc, color} = p;
-        const info = {id, name, desc, color};
+        const {id, name, desc, color, showTickets} = p;
+        const info = {id, name, desc, color, showTickets};
 
         for (const t of sc.timeArray) {
           ret.push({...info, ...t});

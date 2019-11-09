@@ -18,54 +18,30 @@
                 hour: 'numeric', minute: 'numeric' })
             }}</td>
             <td width='225px'>
-              <span>
+              <span v-for='label in priceCategoryLabels(item)' :key='label'>
                 <v-text-field
-                  label='Adult Tickets'
+                  :label='`${label[0].toUpperCase() + label.slice(1)} Tickets`'
                   class='d-inline-flex'
                   style='width: 75px;'
                   :rules='[(v) => Number(v) >= 0 || "Needs to be >= 0"]'
                   min='0'
                   type='number'
-                  v-model='item.categories.adult' /> x ${{ Number(getPrices(item.ei.price).categories.adult).toFixed(2) }}
-              </span>
-              <span>
-                <v-text-field
-                  class='d-inline-flex'
-                  label='Child Tickets'
-                  :rules='[(v) => Number(v) >= 0 || "Needs to be >= 0"]'
-                  style='width: 75px'
-                  min='0'
-                  type='number'
-                  v-model='item.categories.child' /> x ${{ Number(getPrices(item.ei.price).categories.child).toFixed(2) }}
-              </span>
-              <span v-if='getPrices(item.ei.price).categories.senior > 0'>
-                <v-text-field
-                  class='d-inline-flex'
-                  label='Senior Tickets'
-                  :rules='[(v) => Number(v) >= 0 || "Needs to be >= 0"]'
-                  min='0'
-                  style='width: 75px'
-                  type='number'
-                  v-model='item.categories.senior' /> x ${{ Number(getPrices(item.ei.price).categories.senior).toFixed(2) }}
+                  v-model='item.categories[label]' /> x {{ priceCategories(item)[label] | money }}
               </span>
             </td>
             <td width='200px'>
-              <p>Adult Tickets: ${{ (item.categories.adult * Number(getPrices(item.ei.price).categories.adult)).toFixed(2) }}</p>
-              <p>Child Tickets: ${{ (item.categories.child * Number(getPrices(item.ei.price).categories.child)).toFixed(2) }}</p>
-              <p v-if='getPrices(item.ei.price).categories.senior > 0'>
-                Senior Tickets: ${{ (item.categories.senior * Number(getPrices(item.ei.price).categories.senior)).toFixed(2) }}
+              <p v-for='label of priceCategoryLabels(item)' :key='label'>
+                {{ label | captialize }} Tickets: {{ item.categories[label] * Number(priceCategories(item)[label]) | money }}
               </p>
             </td>
             <td>
-              ${{ (item.categories.adult * Number(getPrices(item.ei.price).categories.adult) +
-                  item.categories.child * Number(getPrices(item.ei.price).categories.child) +
-                  item.categories.senior * Number(getPrices(item.ei.price).categories.senior)).toFixed(2) }}
+              {{ itemSubtotal(item) | money }}
             </td>
             <td><v-btn small icon @click='removeFromCart(item.id)'><v-icon>close</v-icon></v-btn></td>
           </template>
           <template v-slot:footer>
             <td align='right' :colspan='headers.length - 1'><strong>Total</strong></td>
-            <td>${{ subtotal.toFixed(2) }}</td>
+            <td>{{ subtotal | money }}</td>
           </template>
         </v-data-table>
       </v-card-text>
@@ -75,16 +51,23 @@
           Save
         </v-btn>
         <v-spacer />
-        <pay-pal v-if='items.length > 0'
-          :client='credentials'
-          :env='env'
+        <p id='error-checkout' class='pr-2' v-if='errormsg.length > 0'>
+          {{ errormsg }}
+        </p>
+        <paypal-checkout
           :items='itemList'
           currency='USD'
-          :experience='{input_fields: { no_shipping: 1 } }'
           :amount='subtotal.toFixed(2)'
-          @payment-completed='$emit("checkout-success", $event); emptyCart(); sync = false'
+          :context='appcontext'
+          :payee='payee'
+          description='Ticket Purchase'
+          :btn-style='style'
+          :onClick='clickcheck'
+          :onError='errorHandler'
+          @paypal-approved='emptyCart(); sync = false;'
+          @paypal-completed='$emit("checkout-success", $event)'
+         />
 
-          />
       </v-card-actions>
       </v-form>
     </v-card>
@@ -96,19 +79,25 @@ import { Component, Vue, PropSync, Watch } from 'vue-property-decorator';
 import { Getter, Mutation } from 'vuex-class';
 import { CartItem } from '@/store/states';
 import TicketCategory from '@/api/tickets';
-import PayPal from 'vue-paypal-checkout';
-
-interface Item {
-  name: string;
-  description: string;
-  quantity: string;
-  price: string;
-  currency: string;
-}
+import PaypalCheckout from '@/components/PayPalCheckout.vue';
+import { Item,
+  BtnLayout, ShippingPreference, PreferedPayment, UserAction,
+  BtnLabel, ClickData, ClickActions,
+} from '@/api/paypal';
 
 @Component({
   components: {
-    PayPal,
+    PaypalCheckout,
+  },
+  filters: {
+    captialize: (value: string) => {
+      if (!value) { return ''; }
+      return value[0].toUpperCase() + value.slice(1);
+    },
+    money: (value: string | number) => {
+      const val = Number(value);
+      return '$' + val.toFixed(2);
+    },
   },
 })
 export default class Cart extends Vue {
@@ -119,13 +108,65 @@ export default class Cart extends Vue {
   @Mutation('cart/removeFromCart') public removeFromCart!: (id: string) => void;
   @Mutation('cart/emptyCart') public emptyCart!: () => void;
 
-  public credentials = {
-    sandbox: process.env.VUE_APP_PAYPAL_SANDBOX_ID,
-    prouction: process.env.VUE_APP_PAYPAL_PRODUCTION_ID,
-  };
-  public readonly env = process.env.VUE_APP_PAYPAL_ENV;
+  public headers = [
+    { text: 'Trip', align: 'left', value: 'date' },
+    { text: 'Tickets', align: 'left', value: 'numAdult'},
+    { text: 'Sub Totals', align: 'left', sortable: false},
+    { text: 'Trip Total', align: 'left', sortable: false},
+    { text: '', sortable: false },
+  ];
 
   public valid = true;
+  public errormsg = '';
+
+  public readonly appcontext = {
+    shipping_preference: ShippingPreference.NO_SHIPPING,
+    user_action: UserAction.PAY_NOW,
+    payment_method: {
+      payee_preferred: PreferedPayment.IMMEDIATE,
+    },
+  };
+
+  public readonly payee = {
+    merchant_id: process.env.VUE_APP_MERCHANT_ID,
+    email_address: process.env.VUE_APP_MERCHANT_EMAIL,
+  };
+
+  public readonly style = {
+    layout: BtnLayout.HORIZONTAL,
+    tagline: false,
+  };
+
+  public priceCategoryLabels(item: CartItem): string[] {
+    const cats = this.priceCategories(item);
+    return Object.keys(cats).sort().filter((c) => Number(cats[c]) > 0);
+  }
+
+  public priceCategories(item: CartItem): {[label: string]: string} {
+    return this.getPrices(item.ei.price)!.categories;
+  }
+
+  public itemSubtotal(item: CartItem): number {
+    const priceCats = this.priceCategories(item);
+    let total = 0;
+    for (const cat of Object.keys(item.categories)) {
+      total += item.categories[cat] * Number(priceCats[cat]);
+    }
+    return total;
+  }
+
+  public errorHandler(err: Error) {
+    console.log(err);
+  }
+
+  public async clickcheck(data: ClickData, actions: ClickActions) {
+    if (this.itemList.length > 0) {
+      return actions.resolve();
+    } else {
+      this.errormsg = 'Must put stuff in your cart first';
+      return actions.reject();
+    }
+  }
 
   public get itemList(): Item[] {
     const ret: Item[] = [];
@@ -136,13 +177,13 @@ export default class Cart extends Vue {
                 year: 'numeric', month: '2-digit', day: 'numeric',
                 hour: 'numeric', minute: 'numeric' });
       for (const key of Object.keys(val.categories)) {
-        if (val.categories[key]) {
+        if (Number(val.categories[key]) > 0) {
           ret.push({
-            name: key[0].toUpperCase() + key.slice(1) + ' Ticket, ' + prod,
-            description: '',
+            sku: val.ei.id.toString() + key.toUpperCase() + val.date.getTime().toString(),
+            name: key[0].toUpperCase() + key.slice(1) + ' Ticket',
+            description: prod,
             quantity: val.categories[key].toString(),
-            price: Number(priceCat.categories[key]).toFixed(2),
-            currency: 'USD',
+            unit_amount: { value: Number(priceCat.categories[key]).toFixed(2), currency_code: 'USD' },
           });
         }
       }
@@ -161,14 +202,6 @@ export default class Cart extends Vue {
       return total;
     }, 0);
   }
-
-  public headers = [
-    { text: 'Trip', align: 'left', value: 'date' },
-    { text: 'Tickets', align: 'left', value: 'numAdult'},
-    { text: 'Sub Totals', align: 'left', sortable: false},
-    { text: 'Trip Total', align: 'left', sortable: false},
-    { text: '', sortable: false },
-  ];
 
   public customSort(items: CartItem[], col: string, isDesc: boolean): CartItem[] {
     const factor = isDesc ? -1 : 1;
@@ -189,3 +222,9 @@ export default class Cart extends Vue {
   }
 }
 </script>
+
+<style lang="stylus" scoped>
+#error-checkout
+  color red
+  font-weight bold
+</style>
