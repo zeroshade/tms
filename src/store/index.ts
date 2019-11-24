@@ -2,8 +2,11 @@ import Vue from 'vue';
 import Vuex, { Module } from 'vuex';
 import { RootState, ProductState, TicketState } from './states';
 import CartModule from './cart';
+// import AuthModule from './authmod';
 import Product, { getProducts, putProduct } from '@/api/product';
-import TicketCategory, { saveCategories } from '@/api/tickets';
+import TicketCategory, { saveCategories, ScheduleSold, getCurrSold } from '@/api/tickets';
+import moment from 'moment';
+import AuthModule from './auth';
 
 Vue.use(Vuex);
 
@@ -129,6 +132,9 @@ const ticketModule: Module<TicketState, RootState> = {
     async deleteCategory({commit}, id: number) {
       commit('removeCategory', id);
     },
+    async getSold({}, payload: {from: moment.Moment, to: moment.Moment}): Promise<ScheduleSold[]> {
+      return await getCurrSold(payload.from, payload.to);
+    },
   },
 };
 
@@ -175,12 +181,15 @@ export default new Vuex.Store<RootState>({
     product: productModule,
     tickets: ticketModule,
     cart: CartModule,
+    auth: AuthModule,
   },
   state: {
 
   },
   mutations: {
-
+    logError(state: RootState, err: Error) {
+      console.log(err);
+    },
   },
   actions: {
 

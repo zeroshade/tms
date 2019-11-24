@@ -89,11 +89,18 @@
 </template>
 
 <script lang='ts'>
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop, Watch } from 'vue-property-decorator';
 import { Schedule } from '@/api/product';
 import EditSchedule from '@/components/EditSchedule.vue';
 import { Action, Getter } from 'vuex-class';
 import Product from '@/api/product';
+
+function fixDate(year: number, day: string): string {
+  if (day.length <= 5) {
+    return `${year}-${day}`;
+  }
+  return day;
+}
 
 @Component({
   components: {
@@ -102,7 +109,7 @@ import Product from '@/api/product';
 })
 export default class ProductForm extends Vue {
   @Action('product/saveProduct') public saveProduct!: (prod: Product) => Promise<void>;
-  @Getter('product/productByID') public getProd!: (id: number) => Product | null;
+  @Getter('product/products') public prods!: Product[];
   @Prop({ default: -1}) public id!: number;
 
   public stepper = 0;
@@ -117,16 +124,20 @@ export default class ProductForm extends Vue {
 
   public readonly required = (v: string) => !!v || 'Required Field';
 
+  @Watch('prods')
+  public onProds() {
+    const idx = this.prods.findIndex((p) => p.id === this.id);
+    if (idx !== -1) {
+      this.loadProd(this.prods[idx]);
+    }
+  }
+
   public mounted() {
-    if (this.id === -1) {
+    const idx = this.prods.findIndex((p) => p.id === this.id);
+    if (idx === -1) {
       this.addSched();
     } else {
-      const prod = this.getProd(this.id);
-      if (prod === null) {
-        this.addSched();
-      } else {
-        this.loadProd(prod);
-      }
+      this.loadProd(this.prods[idx]);
     }
   }
 
@@ -138,7 +149,7 @@ export default class ProductForm extends Vue {
   public async save() {
     if ((this.$refs.form as HTMLFormElement).validate() && this.validateSchedList()) {
       const {id, name, desc, publish, color, showTickets, schedList} = this;
-      await this.saveProduct({id, name, desc, color, publish, showTickets, schedList});
+      this.saveProduct({id, name, desc, color, publish, showTickets, schedList});
       this.$router.push({name: 'home'});
     }
   }
@@ -160,9 +171,14 @@ export default class ProductForm extends Vue {
     this.publish = p.publish;
     this.color = p.color;
     this.showTickets = p.showTickets;
+    this.schedList = [];
+    const y = new Date().getFullYear();
     for (const s of p.schedList) {
       const newsched = {...s};
+      newsched.start = fixDate(y, newsched.start);
+      newsched.end = fixDate(y, newsched.end);
       newsched.timeArray = s.timeArray.map((v) => ({...v}));
+      newsched.notAvailArray = newsched.notAvailArray.map((n) => fixDate(y, n));
       this.schedList.push(newsched);
     }
   }

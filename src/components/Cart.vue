@@ -13,10 +13,8 @@
           <template v-slot:items="{ item }">
             <td width='200px'>
               <strong>{{item.ei.name}}</strong> <br/>
-              {{ item.date.toLocaleDateString('en-US', {
-                year: 'numeric', month: '2-digit', day: 'numeric',
-                hour: 'numeric', minute: 'numeric' })
-            }}</td>
+              {{ item.date | moment('M/D/YY, h:mm A') }}
+            </td>
             <td width='225px'>
               <span v-for='label in priceCategoryLabels(item)' :key='label'>
                 <v-text-field
@@ -84,6 +82,7 @@ import { Item,
   BtnLayout, ShippingPreference, PreferedPayment, UserAction,
   BtnLabel, ClickData, ClickActions,
 } from '@/api/paypal';
+import moment from 'moment';
 
 @Component({
   components: {
@@ -173,9 +172,7 @@ export default class Cart extends Vue {
     this.items.forEach((val) => {
       const priceCat = this.getPrices(val.ei.price);
       if (priceCat === null) { return; }
-      const prod = val.ei.name + ', ' + val.date.toLocaleDateString('en-US', {
-                year: 'numeric', month: '2-digit', day: 'numeric',
-                hour: 'numeric', minute: 'numeric' });
+      const prod = val.ei.name + ', ' + moment(val.date).format('M/D/YY, H:mm A');
       for (const key of Object.keys(val.categories)) {
         if (Number(val.categories[key]) > 0) {
           ret.push({

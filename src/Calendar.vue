@@ -7,7 +7,7 @@
         </v-btn>
       </v-flex>
       <v-flex sm4 xs12 class='text-xs-center'>
-        <span id='calmonth' class='title'>{{curMonth}}</span>
+        <span id='calmonth' class='title'>{{ [start, 'YYYY-MM-DD'] | moment('MMMM') }}</span>
       </v-flex>
       <v-flex sm4 xs12 class='text-sm-right text-xs-center'>
         <v-btn @click='$refs.calendar.next()'>
@@ -17,15 +17,21 @@
 
       <v-flex xs12 class='mt-3'>
         <v-sheet :height='calendarHeight'>
-          <v-calendar id='eventcal' ref='calendar' type='month' v-model='start'>
+          <v-calendar :key='sold.length' id='eventcal' ref='calendar' type='month' v-model='start'>
             <template v-slot:day="{ year, month, day, past, date }">
               <template v-for='ei in getEvents(year, month, day)'>
-                <div v-if='!past'
-                  v-ripple class='event' :style='{backgroundColor: ei.color, borderColor: ei.color }'
-                  :key='`${ei.id}-${ei.time}`'
-                  @click='addToCart(ei, date)'>
-                  {{ formatTime(date, ei.time) }} - {{ ei.name }}
-                </div>
+                <v-badge class='badge' right :key='`${ei.id}-${ei.time}`' bottom overlap color='purple'>
+                  <template v-slot:badge>
+                    <span class='caption' v-if='ei.showTickets' :key='`span-${ei.id}-${ei.time}`'>{{ ei.avail }}</span>
+                  </template>
+
+                  <div v-if='!past'
+                    v-ripple class='event' :style='{backgroundColor: ei.color, borderColor: ei.color }'
+                    @click='addToCart(ei, date)'>
+                    {{ [date + ' ' + ei.time, 'YYYY-MM-DD H:mm'] | moment('h:mm A') }}
+                    - {{ ei.name }}
+                  </div>
+                </v-badge>
               </template>
             </template>
           </v-calendar>
@@ -37,11 +43,13 @@
 </template>
 
 <script lang='ts'>
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Getter, Action } from 'vuex-class';
 import Product, { EventInfo } from '@/api/product';
 import { OrderDetails } from '@/api/paypal';
+import { ScheduleSold } from '@/api/tickets';
 import Cart from '@/components/Cart.vue';
+import moment from 'moment';
 
 @Component({
   components: {
@@ -52,21 +60,21 @@ export default class Calendar extends Vue {
   @Getter('product/products') public prods!: Product[];
   @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Action('cart/addCartItem') public addCartItem!: (payload: {ei: EventInfo, date: string}) => void;
+  @Action('tickets/getSold') public getSold!: (payload: {from: moment.Moment, to: moment.Moment}) => Promise<ScheduleSold[]>;
 
   public readonly calendarHeight = process.env.VUE_APP_CALENDAR_HEIGHT;
 
-  public start = '';
+  public start = moment().startOf('year').format('YYYY-MM-DD');
   public showCart = false;
   public showFinal = false;
+  public sold: Map<string, ScheduleSold> = new Map();
 
   public async created() {
     await this.loadProducts();
   }
 
   public mounted() {
-    const today = new Date();
-    const month = today.getMonth() + 1; // convert to 1-indexed
-    this.start = today.getFullYear() + '-' + month  + '-01';
+    this.start = moment().startOf('month').format('YYYY-MM-DD');
   }
 
   public addToCart(ei: EventInfo, date: string) {
@@ -74,35 +82,41 @@ export default class Calendar extends Vue {
     this.showCart = true;
   }
 
-  public formatTime(date: string, time: string): string {
-    return new Date(date + ' ' + time).toLocaleString('en-US', {hour: 'numeric', minute: 'numeric'});
-  }
-
-  public get curMonth(): string {
-    return new Date(this.start + ' EST').toLocaleString('en-US', {month: 'long', year: 'numeric'});
-  }
-
   public checkedOut(event: OrderDetails) {
     console.log(event);
   }
 
   public getEvents(year: number, month: number, day: number): EventInfo[] {
-    const d = new Date(year, month - 1, day);
+    const current = moment().add(1, 'hour');
+    const d = moment().year(year).month(month - 1).date(day);
     const ret: EventInfo[] = [];
     for (const p of this.prods.filter((pr) => pr.publish)) {
+      const {id, name, desc, color, showTickets} = p;
+      const info = {id, name, desc, color, showTickets};
       for (const sc of p.schedList) {
-        const s = this.getDate(sc.start, year);
-        const e = this.getDate(sc.end, year);
+        const s = this.getMoment(sc.start, year);
+        const e = this.getMoment(sc.end, year);
 
-        if (s > d || d > e || !sc.selectedDays.includes(d.getDay())) {
+        if (!d.isBetween(s, e, 'day') || !sc.selectedDays.includes(d.day())) {
           continue;
         }
 
-        const {id, name, desc, color, showTickets} = p;
-        const info = {id, name, desc, color, showTickets};
+        if (sc.notAvailArray.find((val) => this.getMoment(val, year).isSame(d, 'day'))) {
+          continue;
+        }
 
+        const stock = sc.ticketsAvail;
         for (const t of sc.timeArray) {
-          ret.push({...info, ...t});
+          const [h, m] = t.time.split(':');
+          const curmoment = d.clone().hour(Number(h)).minute(Number(m)).second(0);
+          if (!curmoment.isSameOrBefore(current)) {
+            const soldkey = String(id) + String(curmoment.unix());
+            let avail = stock;
+            if (this.sold.has(soldkey)) {
+              avail = stock - this.sold.get(soldkey)!.qty;
+            }
+            ret.push({...t, ...info, avail});
+          }
         }
       }
     }
@@ -112,9 +126,21 @@ export default class Calendar extends Vue {
     });
   }
 
-  private getDate(date: string, year: number): Date {
-    const [, month, day] = date.split('-');
-    return new Date(+year, +month - 1, +day);
+  @Watch('start')
+  public async onStartChanged(newval: string) {
+    const start = moment(newval);
+    const end = start.clone().endOf('month');
+    const cur = await this.getSold({from: start, to: end});
+    this.sold.clear();
+    for (const s of cur) {
+      this.sold.set(String(s.pid) + String(moment(s.stamp).unix()), s);
+    }
+    (this.$refs.calendar as any).$forceUpdate();
+  }
+
+  private getMoment(date: string, year: number): moment.Moment {
+    const [month, day] = date.split('-');
+    return moment().year(year).month(Number(month) - 1).date(Number(day));
   }
 }
 </script>

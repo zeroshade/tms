@@ -60,12 +60,15 @@
         </v-list-tile>
       </v-list-group>
     </v-list>
+    <v-btn @click='logout()'>Logout</v-btn>
   </v-navigation-drawer>
 </template>
 
-<script>
-import { Component, Vue } from 'vue-property-decorator';
+<script lang='ts'>
+import { Component, Vue, Prop } from 'vue-property-decorator';
 
 @Component
-export default class NavBar extends Vue {}
+export default class NavBar extends Vue {
+  @Prop(Function) public logout!: (o?: any) => void;
+}
 </script>

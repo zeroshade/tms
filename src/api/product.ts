@@ -11,6 +11,7 @@ interface PInfo {
 export interface ScheduleTime {
   time: string;
   price: string;
+  avail?: number;
 }
 
 export interface Schedule {
@@ -37,7 +38,14 @@ export async function getProducts(): Promise<Product[]> {
   return await response.json();
 }
 
+import moment from 'moment';
+
 export async function putProduct(p: Product) {
+  for (const s of p.schedList) {
+    s.start = moment(s.start).format('MM-DD');
+    s.end = moment(s.end).format('MM-DD');
+    s.notAvailArray = s.notAvailArray.map((n) => moment(n).format('MM-DD'));
+  }
   const response = await fetch(BASEURL + '/product', {
     method: 'PUT',
     mode: 'cors',
