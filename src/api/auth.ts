@@ -25,13 +25,13 @@ export class Auth {
       domain: process.env.VUE_APP_AUTH0_DOMAIN || '',
       client_id: process.env.VUE_APP_AUTH0_CLIENT_ID || '',
       redirect_uri: window.location.origin,
-      scope: 'openid profile email read:users',
       audience: 'https://tmszero.auth0.com/api/v2/',
     });
 
     try {
-      if (window.location.search.includes('code=') &&
-          window.location.search.includes('state=')) {
+      if (window.location.search.includes('error=') ||
+          (window.location.search.includes('code=') &&
+          window.location.search.includes('state='))) {
         // handle the redirect and retrieve tokens
         const { appState } = await this.auth0Client!.handleRedirectCallback();
         // Notify subscribers that the redirect callback has happened, passing the appState
@@ -69,6 +69,9 @@ export class Auth {
       this.isAuthenticated = true;
     } catch (e) {
       this.error = e;
+      this.logout({
+        returnTo: 'google.com',
+      });
     } finally {
       this.loading = false;
     }
@@ -93,9 +96,4 @@ export class Auth {
   public logout(o: any) {
     return this.auth0Client!.logout(o);
   }
-}
-
-export function Auth0Plugin(Vue: typeof _Vue, options?: any): void {
-  const auth = new Auth();
-  Vue.prototype.$auth = auth;
 }

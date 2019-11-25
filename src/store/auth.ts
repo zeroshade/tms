@@ -1,7 +1,7 @@
 import { Auth } from '@/api/auth';
 import { AuthState, RootState } from './states';
 import { Module } from 'vuex';
-import getUsers from '@/api/users';
+import getUsers, { User, addUser, deleteUser } from '@/api/users';
 
 const auth = new Auth();
 export function getAuthInstance(): Auth {
@@ -14,8 +14,12 @@ const authModule: Module<AuthState, RootState> = {
     auth,
     loading: true,
     authenticated: false,
+    userList: [],
   },
   getters: {
+    autherror(state: AuthState): Error | null {
+      return state.auth.error;
+    },
     loading(state: AuthState): boolean {
       return state.loading;
     },
@@ -25,6 +29,9 @@ const authModule: Module<AuthState, RootState> = {
     user(state: AuthState): object {
       return state.auth.user;
     },
+    users(state: AuthState): User[] {
+      return state.userList;
+    },
   },
   mutations: {
     setInit(state: AuthState) {
@@ -33,6 +40,9 @@ const authModule: Module<AuthState, RootState> = {
     },
     setAuth(state: AuthState, isauth: boolean) {
       state.authenticated = isauth;
+    },
+    setUsers(state: AuthState, users: User[]) {
+      state.userList = users;
     },
   },
   actions: {
@@ -56,9 +66,25 @@ const authModule: Module<AuthState, RootState> = {
     async getBearerToken({state}): Promise<string> {
       return await state.auth.getTokenSilently();
     },
-    async getUsers({state, dispatch}): Promise<any> {
+    async makeAuthReq({dispatch}, req: Request): Promise<Response> {
       const token = await dispatch('getBearerToken');
-      return await getUsers(token);
+      return await fetch(req, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    },
+    async loadUsers({commit, dispatch}): Promise<void> {
+      const resp = await dispatch('makeAuthReq', getUsers());
+      commit('setUsers', await resp.json());
+    },
+    async addUser({dispatch}, u: User): Promise<void> {
+      await dispatch('makeAuthReq', addUser(u));
+      return;
+    },
+    async deleteUser({dispatch}, userid: string): Promise<void> {
+      await dispatch('makeAuthReq', deleteUser(userid));
+      await dispatch('loadUsers');
     },
   },
 };

@@ -3,10 +3,11 @@ import Vuex, { Module } from 'vuex';
 import { RootState, ProductState, TicketState } from './states';
 import CartModule from './cart';
 // import AuthModule from './authmod';
-import Product, { getProducts, putProduct } from '@/api/product';
+import Product, { getProductsReq, putProduct } from '@/api/product';
 import TicketCategory, { saveCategories, ScheduleSold, getCurrSold } from '@/api/tickets';
 import moment from 'moment';
 import AuthModule from './auth';
+import { BASEURL } from '@/api/utils';
 
 Vue.use(Vuex);
 
@@ -167,11 +168,12 @@ const productModule: Module<ProductState, RootState> = {
   },
   actions: {
     async saveProduct({commit, dispatch}, prod: Product) {
-      await putProduct(prod);
-      commit('updateProd', prod);
+      const resp = await dispatch('auth/makeAuthReq', putProduct(prod), { root: true });
+      commit('updateProd', await resp.json());
     },
     async loadProducts({commit, dispatch}) {
-      commit('setProducts', await getProducts());
+      const resp = await dispatch('auth/makeAuthReq', getProductsReq(), { root: true });
+      commit('setProducts', await resp.json());
     },
   },
 };

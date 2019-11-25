@@ -18,17 +18,15 @@ import { Action, Getter } from 'vuex-class';
   },
 })
 export default class App extends Vue {
-  @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
-  @Action('auth/loginWithRedirect') public loginWithRedirect!: (o?: any) => void;
-  @Action('auth/loginWithPopup') public loginWithPopup!: (o?: any) => Promise<void>;
   @Action('auth/logout') public logMeOut!: (o?: any) => void;
+  @Getter('auth/autherror') public autherror!: Error | null;
 
   public async created() {
-    await this.loadProducts();
+    // await this.loadProducts();
   }
 
   public login() {
-    this.loginWithRedirect();
+    // this.loginWithRedirect();
     // this.loginWithPopup();
   }
 

@@ -33,20 +33,19 @@ export default Product;
 
 export type EventInfo = PInfo & ScheduleTime;
 
-export async function getProducts(): Promise<Product[]> {
-  const response = await fetch(BASEURL + '/');
-  return await response.json();
+export function getProductsReq(): Request {
+  return new Request(BASEURL + '/');
 }
 
 import moment from 'moment';
 
-export async function putProduct(p: Product) {
+export function putProduct(p: Product): Request {
   for (const s of p.schedList) {
     s.start = moment(s.start).format('MM-DD');
     s.end = moment(s.end).format('MM-DD');
     s.notAvailArray = s.notAvailArray.map((n) => moment(n).format('MM-DD'));
   }
-  const response = await fetch(BASEURL + '/product', {
+  return new Request(BASEURL + '/product', {
     method: 'PUT',
     mode: 'cors',
     cache: 'no-cache',

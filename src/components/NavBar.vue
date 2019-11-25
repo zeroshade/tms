@@ -41,10 +41,10 @@
             <v-list-tile-title>Users</v-list-tile-title>
           </v-list-tile>
         </template>
-        <v-list-tile>
+        <v-list-tile exact :to="{name: 'userhome'}">
           <v-list-tile-title>Home</v-list-tile-title>
         </v-list-tile>
-        <v-list-tile>
+        <v-list-tile exact :to="{name: 'useradd'}">
           <v-list-tile-title>Add User</v-list-tile-title>
         </v-list-tile>
       </v-list-group>

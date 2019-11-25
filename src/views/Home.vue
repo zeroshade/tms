@@ -26,8 +26,8 @@ import Product from '@/api/product';
 
 @Component
 export default class Home extends Vue {
+  @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Getter('product/products') public prods!: Product[];
-  @Action('auth/getUsers') public getUsers!: () => Promise<void>;
 
   public headers = [
     {
@@ -54,8 +54,8 @@ export default class Home extends Vue {
     },
   ];
 
-  public async mounted() {
-    console.log(await this.getUsers());
+  public async created() {
+    await this.loadProducts();
   }
 }
 </script>

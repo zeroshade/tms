@@ -60,7 +60,8 @@ export default class Calendar extends Vue {
   @Getter('product/products') public prods!: Product[];
   @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Action('cart/addCartItem') public addCartItem!: (payload: {ei: EventInfo, date: string}) => void;
-  @Action('tickets/getSold') public getSold!: (payload: {from: moment.Moment, to: moment.Moment}) => Promise<ScheduleSold[]>;
+  @Action('tickets/getSold') public getSold!: (payload: {from: moment.Moment, to: moment.Moment})
+    => Promise<ScheduleSold[]>;
 
   public readonly calendarHeight = process.env.VUE_APP_CALENDAR_HEIGHT;
 

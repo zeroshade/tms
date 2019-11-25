@@ -1,12 +1,35 @@
-async function getUsers(token: string) {
-  const response = await fetch('https://tmszero.auth0.com/api/v2/users', {
-    method: 'GET',
-    mode: 'cors',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return await response.json();
+import { BASEURL } from './utils';
+
+export interface User {
+  name: string;
+  user_id: string;
+  email: string;
+  app_metadata: { role: string };
+  password?: string;
+  username: string;
 }
 
-export default getUsers;
+export default function getUsers(): Request {
+  return new Request(BASEURL + '/users', {
+    method: 'GET',
+    mode: 'cors',
+  });
+}
+
+export function addUser(u: User): Request {
+  return new Request(BASEURL + '/user', {
+    method: 'POST',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(u),
+  });
+}
+
+export function deleteUser(userid: string): Request {
+  return new Request(BASEURL + `/user/${userid}`, {
+    method: 'DELETE',
+    mode: 'cors',
+  });
+}
