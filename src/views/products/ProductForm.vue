@@ -108,6 +108,7 @@ function fixDate(year: number, day: string): string {
   },
 })
 export default class ProductForm extends Vue {
+  @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Action('product/saveProduct') public saveProduct!: (prod: Product) => Promise<void>;
   @Getter('product/products') public prods!: Product[];
   @Prop({ default: -1}) public id!: number;
@@ -130,6 +131,10 @@ export default class ProductForm extends Vue {
     if (idx !== -1) {
       this.loadProd(this.prods[idx]);
     }
+  }
+
+  public async created() {
+    await this.loadProducts();
   }
 
   public mounted() {

@@ -1,7 +1,12 @@
 import Vue from 'vue';
-import Vuetify, {VLayout} from 'vuetify/lib';
-import 'vuetify/src/stylus/app.styl';
+import Vuetify from 'vuetify/lib';
 
+Vue.use(Vuetify);
+
+const opts = {};
+
+export default new Vuetify(opts);
+/*
 Vue.use(Vuetify, {
   theme: {
     primary: '#2196F3',
@@ -15,3 +20,4 @@ Vue.use(Vuetify, {
   iconfont: 'md',
   components: { VLayout },
 });
+*/

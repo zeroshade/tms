@@ -1,6 +1,9 @@
 <template>
   <v-container>
     <v-layout fluid>
+      <v-flex><div class='headline mb-3'>Products</div></v-flex>
+    </v-layout>
+    <v-layout fluid>
       <v-flex>
         <v-data-table :headers='headers' :items='prods' class='elevation-1'>
           <template v-slot:items="{ item }">

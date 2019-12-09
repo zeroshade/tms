@@ -59,6 +59,19 @@ export interface Payee {
   merchant_id?: string;
 }
 
+export interface CapturedPayment {
+  update_time?: Date;
+  create_time?: Date;
+  id: string;
+  status: string;
+  amount: Money;
+  seller_receivable_breakdown: {
+    gross_amount: Money;
+    paypal_fee: Money;
+    net_amount: Money;
+  };
+}
+
 export interface PurchaseUnit {
   reference_id?: string; // max length 256
   payee?: Payee;
@@ -69,6 +82,9 @@ export interface PurchaseUnit {
   soft_descriptor?: string; // max length 22
   amount: Amount;
   items?: Item[];
+  payments?: {
+    captures: CapturedPayment[];
+  };
 }
 
 enum LandingPage {

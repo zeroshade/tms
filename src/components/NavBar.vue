@@ -29,7 +29,7 @@
         <v-list-tile :to="{name: 'newprod'}">
           <v-list-tile-title>Add A Product</v-list-tile-title>
         </v-list-tile>
-        <v-list-tile>
+        <v-list-tile :to="{name: 'vieworders'}">
           <v-list-tile-title>View Orders</v-list-tile-title>
         </v-list-tile>
 

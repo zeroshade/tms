@@ -2,12 +2,17 @@
   <v-container>
     <v-layout fluid>
       <v-flex>
+        <div class='headline mb-3'>Users</div>
+      </v-flex>
+    </v-layout>
+    <v-layout fluid>
+      <v-flex>
         <v-data-table :headers='headers' :items='users' class='elevation-1'>
           <template v-slot:items="{item}">
             <td>{{ item.name }}</td>
             <td>{{ item.username }}</td>
             <td>{{ item.app_metadata.role }}</td>
-            <td><v-btn @click='remove(item)' icon><v-icon small>delete</v-icon></v-btn></td>
+            <td><v-btn v-if='item.app_metadata.role !== "admin"' @click='remove(item)' icon><v-icon small>delete</v-icon></v-btn></td>
           </template>
         </v-data-table>
       </v-flex>
@@ -48,7 +53,7 @@ export default class UsersHome extends Vue {
     {
       text: '',
       sortable: false,
-    }
+    },
   ];
 
   public async remove(u: User) {

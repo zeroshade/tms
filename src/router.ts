@@ -18,7 +18,7 @@ const authGuard = async (to: Route, from: Route, next: nextfunc ): Promise<void>
     if (auth.error !== null) {
       return next('/error');
     }
-    auth.loginWithRedirect({ fragment: "merchantid=" + process.env.VUE_APP_MERCHANT_ID, appState: { targetUrl: to.fullPath }});
+    auth.loginWithRedirect({ appState: { targetUrl: to.fullPath }});
   };
 
   if (!auth.loading) {
@@ -59,6 +59,12 @@ export default new Router({
       beforeEnter: authGuard,
       component: () => import('@/views/products/ProductForm.vue'),
       props: (route: Route) => ({ id: +route.params.id}),
+    },
+    {
+      path: '/product/orders',
+      name: 'vieworders',
+      beforeEnter: authGuard,
+      component: () => import('@/views/products/ViewOrders.vue'),
     },
     {
       path: '/tickets/price/edit',
