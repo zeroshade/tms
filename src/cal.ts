@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import './plugins/vuetify';
+import vuetify from './plugins/vuetify';
 import App from './Calendar.vue';
 import store from './store';
 import './registerServiceWorker';
@@ -11,6 +11,7 @@ Vue.config.productionTip = false;
 Vue.use(VueMoment);
 
 new Vue({
+  vuetify,
   store,
   render: (h) => h(App),
 }).$mount('#app');

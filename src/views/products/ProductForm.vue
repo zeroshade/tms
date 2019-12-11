@@ -13,74 +13,80 @@
         </v-stepper-header>
         <v-stepper-items>
           <v-stepper-content step='1'>
-            <v-card class='mb-5' height='250px'>
-              <v-layout row wrap>
-                <v-flex xs12 md4>
+            <v-card class='mx-auto'>
+              <v-row>
+                <v-col cols="12" md="5">
                   <v-text-field
                     label='Name'
                     v-model='name'
                     :rules='[required]'
                     required />
-                </v-flex>
-                <v-flex xs4 offset-md1 md1>
+                </v-col>
+                <v-col cols="4" offset-md="1" md="2">
                   <v-select label='Color'
                     :items='["blue", "red"]'
                     v-model='color' />
-                </v-flex>
-                <v-flex xs5 offset-md1 md2>
+                </v-col>
+                <v-col cols="5" offset-md="1" md="2">
                   <v-switch
                     v-model='publish'
                     label='Publish' />
-                </v-flex>
-                <v-flex offset-xs1 xs5 offset-md1 md2>
-                  <v-switch
-                    v-model='showTickets'
-                    label='Show Tickets Left' />
-                </v-flex>
-                <v-flex xs10>
+                </v-col>
+                <v-col md="9">
                   <v-textarea
+                    outlined
                     label='Description'
                     v-model='desc'
                     required />
-                </v-flex>
-              </v-layout>
-            </v-card>
-
+                </v-col>
+                <v-col cols="5" md="3">
+                  <v-switch
+                    v-model='showTickets'
+                    label='Show Tickets Left' />
+                </v-col>
+              </v-row>
+              <v-card-actions>
           <v-btn color='primary' @click='stepper = 2'>
             Continue
           </v-btn>
           <v-btn color='success' @click='save()'>
             Save
           </v-btn>
-        </v-stepper-content>
-        <v-stepper-content step='2'>
-          <v-card class='mb-5' min-height='500px'>
-              <v-layout align-space-around column fill-height>
-                <v-flex>
-                  <v-btn @click='addSched()' style='float: right' color='success'>Add New Schedule</v-btn>
-                </v-flex>
-                <template v-for='(item, idx) in schedList'>
-                  <v-flex :key='`title-${idx}`'>
-                    <p class='mt-2 subheading'>Schedule {{ idx + 1 }}
-                      <v-btn class='mt-0' color='error' fab absolute right
-                        @click='schedList.splice(idx, 1)'>
-                        <v-icon>close</v-icon>
-                      </v-btn>
-                    </p>
-                  </v-flex>
-                  <v-flex style='border-style: ridge' :key='`sched-${idx}`'>
-                    <edit-schedule ref='edit' :sched='schedList[idx]' style='margin: 10px' />
-                  </v-flex>
-                </template>
-              </v-layout>
+              </v-card-actions>
             </v-card>
 
-            <v-btn color='secondary' @click='stepper = 1'>
-              Back
-            </v-btn>
-            <v-btn color='success' @click='save()'>
-              Save
-            </v-btn>
+        </v-stepper-content>
+        <v-stepper-content step='2'>
+          <v-card class='mx-auto' min-height='500px'>
+            <v-row>
+              <v-col offset="8" md="4">
+                  <v-btn @click='addSched()' style='float: right' color='success'>Add New Schedule</v-btn>
+              </v-col>
+            </v-row>
+            <v-container fluid>
+              <v-card shaped class='mx-auto mb-4' v-for='(item, idx) in schedList' :key='`edit-${idx}`'>
+                <v-card-title>
+                  Schedule {{ idx + 1 }}
+                  <v-spacer />
+                  <v-btn small dark fab right color='red' @click='schedList.splice(idx, 1)'>
+                    <v-icon dark>close</v-icon>
+                  </v-btn>
+                </v-card-title>
+                <v-divider />
+                <v-card-text>
+                  <edit-schedule ref='edit' :sched='schedList[idx]' />
+                </v-card-text>
+              </v-card>
+            </v-container>
+              <v-card-actions>
+                <v-btn color='secondary' @click='stepper = 1'>
+                  Back
+                </v-btn>
+                <v-btn color='success' @click='save()'>
+                  Save
+                </v-btn>
+              </v-card-actions>
+            </v-card>
           </v-stepper-content>
         </v-stepper-items>
       </v-stepper>

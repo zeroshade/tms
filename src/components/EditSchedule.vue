@@ -1,75 +1,86 @@
 <template>
-  <v-layout row wrap>
-    <v-flex xs12 md2>
-      <date-input v-model='sched.start' label='Start' :max='sched.end' />
-    </v-flex>
-    <v-flex xs12 offset-md1 md2>
-      <date-input v-model='sched.end' label='End' :min='sched.start' />
-    </v-flex>
-    <v-flex xs12 offset-md1 md5>
-      <v-select v-model='dayArray' :items='days' dense
-        :rules='[(v) => v.length > 0 || "Must Choose at least one day"]'
-        label='Days' multiple chips hint='Choose days of the week'
-        persistent-hint deletable-chips small-chips />
-    </v-flex>
-    <v-flex xs8>
-      <v-slider v-model='sched.ticketsAvail' :min='1' :max='100' label='Tickets Available' />
-    </v-flex>
-    <v-flex xs1 offset-xs2>
-      <v-text-field v-model='sched.ticketsAvail' class='mt-0' type='number' />
-    </v-flex>
-    <v-flex xs4 md2>
-      Trip Times:
-      <v-btn @click='sched.timeArray.push({time: "", price: ""})'
-        fab dark color='teal' small>
-        <v-icon>add</v-icon>
-      </v-btn>
-      <p v-if='showErrors && sched.timeArray.length === 0' class='error--text'>
-        Must have at least one time set
-      </p>
-    </v-flex>
-    <v-flex xs8 md8 offset-xs1>
-      <v-layout wrap class='pt-3'>
-        <template v-for='(tm, idx) in sched.timeArray'>
-          <v-flex xs3 :key='`time-${idx}`'>
-            <time-input required
-              field-cls='mr-1 mt-0 pt-0' v-model='sched.timeArray[idx].time' label='Trip Time' />
-          </v-flex>
-          <v-flex xs2 :key='`price-${idx}`'>
-            <v-select label='Price Set' class='ml-1'
-              :rules='[(v) => v.length > 0 || "Must Pick One"]'
-              dense style='margin-top: -12px' v-model='sched.timeArray[idx].price'
-              :items='categories.map((c) => c.name)' />
-          </v-flex>
-          <v-flex xs1 :key='`close-${idx}`'>
-            <v-btn fab bottom right small flat @click='sched.timeArray.splice(idx, 1)'>
+  <v-container>
+    <v-row>
+      <v-col md="2" class='mt-n3'>
+        <date-input v-model='sched.start' label='Start' :max='sched.end' />
+      </v-col>
+      <v-col offset-md="1" md="2" class='mt-n3'>
+        <date-input v-model='sched.end' label='End' :min='sched.start' />
+      </v-col>
+      <v-col offset-md="1" md="6">
+        <v-select v-model='dayArray' :items='days' dense
+          :rules='[(v) => v.length > 0 || "Must choose at least one day"]'
+          label='Days' multiple chips hint='Choose days of the week'
+          persistent-hint deletable-chips small-chips />
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols='11' class='pr-4'>
+        <v-slider class='align-center' v-model='sched.ticketsAvail' hide-details
+          :min='1' :max='150' label='Tickets Available'>
+          <template v-slot:append>
+            <v-text-field style='width: 50px' class='mt-0 pt-0' single-line hide-details v-model='sched.ticketsAvail' type='number' />
+          </template>
+        </v-slider>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col cols="4" md="2">
+        <p>Trip Times
+          <v-btn dark small class='mx-2' fab color='teal'
+            @click='sched.timeArray.push({time: "", price: ""})'>
+            <v-icon dark>add</v-icon>
+          </v-btn>
+        </p>
+        <p v-if='showErrors && sched.timeArray.length === 0' class='error--text'>
+          Must have at least one time set
+        </p>
+      </v-col>
+      <v-col cols="8" md="4">
+        <v-row no-gutters dense
+          align='start' justify='start'
+          v-for='(tm, idx) in sched.timeArray' :key='`time-${idx}`'>
+          <v-col v-if='sched.timeArray.length'>
+            <time-input v-model='sched.timeArray[idx].time'
+             field-cls='mr-0 pb-1 mt-0 pt-0' label='Trip Time' />
+          </v-col>
+          <v-col v-if='sched.timeArray.length'>
+            <v-select label='Price Set' class='ml-1 pl-2 mt-0 pb-1'
+              v-model='sched.timeArray[idx].price'
+              dense :items='categories.map((c) => c.name)' />
+          </v-col>
+          <v-col>
+            <v-btn small text @click='sched.timeArray.splice(idx, 1)'>
               <v-icon>close</v-icon>
             </v-btn>
-          </v-flex>
-        </template>
-      </v-layout>
-    </v-flex>
-    <v-flex xs4 md3>
-      Not Available Dates:
-      <v-btn @click='sched.notAvailArray.push("")' fab dark color='teal' small><v-icon>add</v-icon></v-btn>
-    </v-flex>
-    <v-flex xs8 md8>
-      <v-layout wrap class='pt-3'>
-        <template v-for='(na, idx) in sched.notAvailArray'>
-          <v-flex xs3 :key='`na-${idx}`' :offset-xs2='idx % 2'>
+          </v-col>
+        </v-row>
+      </v-col>
+      <v-col cols="4" md="3">
+        <p>Not Available On
+          <v-btn fab right dark small class='mx-2' fab color='purple'
+            @click='sched.notAvailArray.push("")'>
+            <v-icon dark>add</v-icon>
+          </v-btn>
+        </p>
+      </v-col>
+      <v-col cols="8" md="3">
+        <v-row no-gutters dense align='start' justify='start'
+          v-for='(na, idx) in sched.notAvailArray' :key='`na-${idx}`'>
+          <v-col>
             <date-input field-cls='mt-0 pt-0' required
               :min='sched.start' :max='sched.end' :events='dateInSched'
-              v-model='sched.notAvailArray[idx]' label='Not Avail' />
-          </v-flex>
-          <v-flex xs1 :key='`naclose-${idx}`'>
-            <v-btn fab bottom right small flat @click='sched.notAvailArray.splice(idx, 1)'>
+              v-model='sched.notAvailArray[idx]' label='Not Available On' />
+          </v-col>
+          <v-col>
+            <v-btn small text @click='sched.notAvailArray.splice(idx, 1)'>
               <v-icon>close</v-icon>
             </v-btn>
-          </v-flex>
-        </template>
-      </v-layout>
-    </v-flex>
-  </v-layout>
+          </v-col>
+        </v-row>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script lang='ts'>

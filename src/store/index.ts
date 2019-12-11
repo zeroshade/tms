@@ -169,7 +169,8 @@ const productModule: Module<ProductState, RootState> = {
   actions: {
     async saveProduct({commit, dispatch}, prod: Product) {
       const resp = await dispatch('auth/makeAuthReq', putProduct(prod), { root: true });
-      commit('updateProd', await resp.json());
+
+      // commit('updateProd', await resp.json());
     },
     async loadProducts({commit, dispatch}) {
       const resp = await dispatch('auth/makeAuthReq', getProductsReq(), { root: true });

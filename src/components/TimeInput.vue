@@ -4,14 +4,12 @@
     ref='menu'
     :close-on-content-click="false"
     :nudge-right="40"
-    lazy
     transition="scale-transition"
     offset-y
-    full-width
     min-width="230px"
     max-width="230px"
     @input='selected = value'
-    v-on:update:returnValue='$emit("input", selected)'>
+    @update:return-value='$emit("input", $event)'>
     <template v-slot:activator="{ on }">
       <v-text-field
         :class='fieldCls'
@@ -22,7 +20,7 @@
         prepend-icon="access_time"
         v-on="on" />
     </template>
-    <v-time-picker v-model='selected'
+    <v-time-picker v-model='selected' ampm-in-title
       @click:minute='$refs.menu.save(selected)' full-width />
   </v-menu>
 </template>

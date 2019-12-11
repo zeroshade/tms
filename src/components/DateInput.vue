@@ -3,13 +3,11 @@
     v-model="menu"
     :close-on-content-click="false"
     :nudge-right="40"
-    lazy
     transition="scale-transition"
     offset-y
-    full-width
     min-width="290px"
     @input='selected = value'
-    v-on:update:returnValue='$emit("input", selected)'>
+    @update:return-value='$emit("input", selected)'>
     <template v-slot:activator="{ on }">
       <v-text-field
         :class='fieldCls'
@@ -20,12 +18,14 @@
         readonly
         v-on="on" />
     </template>
-    <v-date-picker event-color='teal' :events='events' :min='min' :max='max' v-model='selected' @input="menu = false" />
+    <v-date-picker event-color='teal' :events='events'
+      no-title
+      :min='min' :max='max' v-model='selected' @input="menu = false" />
   </v-menu>
 </template>
 
 <script lang='ts'>
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop, Watch } from 'vue-property-decorator';
 
 @Component
 export default class DateInput extends Vue {

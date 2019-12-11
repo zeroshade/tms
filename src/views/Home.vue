@@ -1,24 +1,22 @@
 <template>
-  <v-container>
-    <v-layout fluid>
-      <v-flex><div class='headline mb-3'>Products</div></v-flex>
-    </v-layout>
-    <v-layout fluid>
-      <v-flex>
+  <v-container fluid>
+    <v-row>
+      <v-col><div class='headline mb-3'>Products</div></v-col>
+    </v-row>
+    <v-row>
+      <v-col>
         <v-data-table :headers='headers' :items='prods' class='elevation-1'>
-          <template v-slot:items="{ item }">
-            <td>{{ item.name }}</td>
-            <td>{{ item.desc }}</td>
-            <td class='text-xs-center'>{{ item.publish ? 'Y' : 'N' }}</td>
-            <td>
-              <v-btn small icon :to='{ name: "editprod", params: { id: item.id } }'>
-                <v-icon small>edit</v-icon>
-              </v-btn>
-            </td>
+          <template v-slot:item.publish="{item}">
+            {{ item.publish ? 'Y' : 'N' }}
+          </template>
+          <template v-slot:item.action="{item}">
+            <v-btn small icon :to='{ name: "editprod", params: { id: item.id } }'>
+              <v-icon small>edit</v-icon>
+            </v-btn>
           </template>
         </v-data-table>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -52,7 +50,9 @@ export default class Home extends Vue {
       sortable: true,
     },
     {
-      text: '',
+      text: 'Actions',
+      align: 'left',
+      value: 'action',
       sortable: false,
     },
   ];
