@@ -60,7 +60,7 @@
         </v-list-item>
       </v-list-group>
     </v-list>
-    <v-btn @click='logout()'>Logout</v-btn>
+    <v-btn class='ml-10' @click='logout()'>Logout</v-btn>
   </v-navigation-drawer>
 </template>
 

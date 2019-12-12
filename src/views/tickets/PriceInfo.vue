@@ -1,32 +1,36 @@
 <template>
-  <v-container>
-    <v-layout fluid>
-      <v-flex>
+  <v-container fluid>
+    <v-row>
+      <v-col><div class='headline mb-3'>Ticket Price Categories</div></v-col>
+    </v-row>
+    <v-row>
+      <v-col>
         <v-data-table :headers='headers' :items='localCats' class='elevation-1'>
-          <template v-slot:items="{ item }">
-            <td><InlineEdit v-model='item.name' label='Edit' /></td>
-            <td v-for='key in Object.keys(item.categories).sort()' :key='key'>
-              <inline-edit valclass='money' v-model='item.categories[key]' label='Edit' :format-num='true' />
-            </td>
-            <td>
-              <v-btn small icon @click='remove(item.id)'><v-icon small>delete</v-icon></v-btn>
-            </td>
+          <template v-slot:item="{ item }">
+            <tr>
+              <td><inline-edit v-model='item.name' label='Edit' /></td>
+              <td v-for='key in Object.keys(item.categories).sort()' :key='key'>
+                <inline-edit valclass='money' v-model='item.categories[key]' label='Edit' :format-num='true' />
+              </td>
+              <td>
+                <v-btn small icon @click='remove(item.id)'><v-icon small>delete</v-icon></v-btn>
+              </td>
+            </tr>
           </template>
           <template v-slot:footer>
-            <td>
-              <v-btn color='primary' @click='addNew()'>
+            <v-divider />
+            <div class='mt-2 mb-2'>
+              <v-btn class='ml-3 mr-4' color='primary' @click='addNew()'>
                 Add New <v-icon right>add_circle</v-icon>
               </v-btn>
-            </td>
-            <td align='right' :colspan='headers.length - 1'>
               <v-btn color='secondary' @click='save(localCats)'>
                 Save Changes <v-icon right>save</v-icon>
               </v-btn>
-            </td>
+            </div>
           </template>
         </v-data-table>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
