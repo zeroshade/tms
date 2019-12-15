@@ -3,6 +3,7 @@ import TicketCategory from '@/api/tickets';
 import { Auth0UserProfile } from 'auth0-js';
 import { Auth } from '@/api/auth';
 import { User } from '@/api/users';
+import { Item } from '@/api/paypal';
 
 export interface RootState {}
 
@@ -24,7 +25,7 @@ export interface CartItem {
 }
 
 export interface ShoppingCartState {
-  items: CartItem[];
+  items: Item[];
 }
 
 export interface AuthState {

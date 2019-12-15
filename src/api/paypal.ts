@@ -50,7 +50,7 @@ export interface Item {
   tax?: Money;
   quantity: string; // max length 10
   description?: string; // max length 127
-  sku?: string; // max length 127
+  sku: string; // max length 127
   category?: Category;
 }
 

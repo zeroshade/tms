@@ -1,5 +1,5 @@
 <template>
-  <v-dialog lazy v-model='sync' persistent max-width='768'>
+  <v-dialog v-model='sync' persistent max-width='768'>
     <v-card>
       <v-form v-model='valid' ref='form'>
       <v-card-title class='headline pb-1'>
@@ -9,37 +9,36 @@
       </v-card-title>
       <v-divider />
       <v-card-text>
-        <v-data-table :custom-sort='customSort' item-key='cartId' hide-actions :items='items' :headers='headers' class='elevation-1'>
-          <template v-slot:items="{ item }">
-            <td width='200px'>
-              <strong>{{item.ei.name}}</strong> <br/>
-              {{ item.date | moment('M/D/YY, h:mm A') }}
-            </td>
-            <td width='225px'>
-              <span v-for='label in priceCategoryLabels(item)' :key='label'>
-                <v-text-field
-                  :label='`${label[0].toUpperCase() + label.slice(1)} Tickets`'
-                  class='d-inline-flex'
-                  style='width: 75px;'
-                  :rules='[(v) => Number(v) >= 0 || "Needs to be >= 0"]'
-                  min='0'
-                  type='number'
-                  v-model='item.categories[label]' /> x {{ priceCategories(item)[label] | money }}
-              </span>
-            </td>
-            <td width='200px'>
-              <p v-for='label of priceCategoryLabels(item)' :key='label'>
-                {{ label | captialize }} Tickets: {{ item.categories[label] * Number(priceCategories(item)[label]) | money }}
-              </p>
-            </td>
-            <td>
-              {{ itemSubtotal(item) | money }}
-            </td>
-            <td><v-btn small icon @click='removeFromCart(item.id)'><v-icon>close</v-icon></v-btn></td>
+        <v-data-table dense :custom-sort='customSort' group-by='description' item-key='sku'
+           hide-default-footer :items='items' :headers='headers' class='elevation-3'>
+          <template v-slot:group.header="{group, groupBy }">
+            <strong class='ml-3'>{{ group }}</strong>
+          </template>
+          <template v-slot:item.unit_amount.value="{ value }">
+            {{ value | money }}
+          </template>
+          <template v-slot:item.quantity="{ item }">
+              <v-text-field
+                label='Quantity'
+                style='width: 75px;'
+                :rules='[(v) => Number(v) >= 0 || "Needs to be >=0"]'
+                min='0'
+                type='number'
+                v-model='item.quantity' />
+          </template>
+          <template v-slot:item.subtotal="{ item }">
+            {{ item.quantity * item.unit_amount.value | money }}
+          </template>
+          <template v-slot:item.remove="{ item }">
+            <v-btn small icon @click='removeFromCart(item.sku)'><v-icon>delete</v-icon></v-btn>
           </template>
           <template v-slot:footer>
-            <td align='right' :colspan='headers.length - 1'><strong>Total</strong></td>
-            <td>{{ subtotal | money }}</td>
+            <v-divider />
+            <div class='d-flex flex-row-reverse'>
+              <p class='mr-2 mb-0'>
+                <strong>Total</strong> {{ subtotal | money }}
+              </p>
+            </div>
           </template>
         </v-data-table>
       </v-card-text>
@@ -53,7 +52,7 @@
           {{ errormsg }}
         </p>
         <paypal-checkout
-          :items='itemList'
+          :items='items'
           currency='USD'
           :amount='subtotal.toFixed(2)'
           :context='appcontext'
@@ -78,6 +77,7 @@ import { Getter, Mutation } from 'vuex-class';
 import { CartItem } from '@/store/states';
 import TicketCategory from '@/api/tickets';
 import PaypalCheckout from '@/components/PayPalCheckout.vue';
+import { EventInfo } from '@/api/product';
 import { Item,
   BtnLayout, ShippingPreference, PreferedPayment, UserAction,
   BtnLabel, ClickData, ClickActions,
@@ -89,7 +89,7 @@ import moment from 'moment';
     PaypalCheckout,
   },
   filters: {
-    captialize: (value: string) => {
+    capitalize: (value: string) => {
       if (!value) { return ''; }
       return value[0].toUpperCase() + value.slice(1);
     },
@@ -101,18 +101,18 @@ import moment from 'moment';
 })
 export default class Cart extends Vue {
   @PropSync('show', {type: Boolean}) public sync!: boolean;
-  @Getter('cart/items') public readonly items!: CartItem[];
+  @Getter('cart/items') public readonly items!: Item[];
   @Getter('tickets/categoryByName') public getPrices!: (name: string) => null | TicketCategory;
   @Mutation('cart/cleanCart') public cleanCart!: () => void;
   @Mutation('cart/removeFromCart') public removeFromCart!: (id: string) => void;
   @Mutation('cart/emptyCart') public emptyCart!: () => void;
 
   public headers = [
-    { text: 'Trip', align: 'left', value: 'date' },
-    { text: 'Tickets', align: 'left', value: 'numAdult'},
-    { text: 'Sub Totals', align: 'left', sortable: false},
-    { text: 'Trip Total', align: 'left', sortable: false},
-    { text: '', sortable: false },
+    { text: 'Type', align: 'left', value: 'name', sortable: false},
+    { text: 'Quantity', align: 'left', value: 'quantity', sortable: false},
+    { text: 'Price Per Ticket', align: 'left', sortable: false, value: 'unit_amount.value'},
+    { text: 'Sub Total', align: 'left', sortable: false, value: 'subtotal'},
+    { text: 'Remove', value: 'remove', sortable: false },
   ];
 
   public valid = true;
@@ -136,30 +136,12 @@ export default class Cart extends Vue {
     tagline: false,
   };
 
-  public priceCategoryLabels(item: CartItem): string[] {
-    const cats = this.priceCategories(item);
-    return Object.keys(cats).sort().filter((c) => Number(cats[c]) > 0);
-  }
-
-  public priceCategories(item: CartItem): {[label: string]: string} {
-    return this.getPrices(item.ei.price)!.categories;
-  }
-
-  public itemSubtotal(item: CartItem): number {
-    const priceCats = this.priceCategories(item);
-    let total = 0;
-    for (const cat of Object.keys(item.categories)) {
-      total += item.categories[cat] * Number(priceCats[cat]);
-    }
-    return total;
-  }
-
   public errorHandler(err: Error) {
     console.log(err);
   }
 
   public async clickcheck(data: ClickData, actions: ClickActions) {
-    if (this.itemList.length > 0) {
+    if (this.items.length > 0) {
       return actions.resolve();
     } else {
       this.errormsg = 'Must put stuff in your cart first';
@@ -167,48 +149,21 @@ export default class Cart extends Vue {
     }
   }
 
-  public get itemList(): Item[] {
-    const ret: Item[] = [];
-    this.items.forEach((val) => {
-      const priceCat = this.getPrices(val.ei.price);
-      if (priceCat === null) { return; }
-      const prod = val.ei.name + ', ' + moment(val.date).format('M/D/YY, H:mm A');
-      for (const key of Object.keys(val.categories)) {
-        if (Number(val.categories[key]) > 0) {
-          ret.push({
-            sku: val.ei.id.toString() + key.toUpperCase() + val.date.getTime().toString(),
-            name: key[0].toUpperCase() + key.slice(1) + ' Ticket',
-            description: prod,
-            quantity: val.categories[key].toString(),
-            unit_amount: { value: Number(priceCat.categories[key]).toFixed(2), currency_code: 'USD' },
-          });
-        }
-      }
-    });
-    return ret;
-  }
-
   public get subtotal(): number {
     return this.items.reduce((total, curr) => {
-      const prices = this.getPrices(curr.ei.price);
-      if (prices === null) { return total; }
-
-      for (const key of Object.keys(curr.categories)) {
-        total += curr.categories[key] * Number(prices.categories[key]);
-      }
-      return total;
+      return total + Number(curr.unit_amount.value) * Number(curr.quantity);
     }, 0);
   }
 
-  public customSort(items: CartItem[], col: string, isDesc: boolean): CartItem[] {
+  public customSort(items: Item[], col: string, isDesc: boolean): Item[] {
     const factor = isDesc ? -1 : 1;
-    return items.sort((a: CartItem, b: CartItem) => {
-      if (a.ei.name < b.ei.name) {
-        return -1 * factor;
-      } else if (a.ei.name > b.ei.name) {
+    return items.sort((a: Item, b: Item) => {
+      if (a.sku < b.sku) {
         return 1 * factor;
+      } else if (a.sku > b.sku) {
+        return -1 * factor;
       } else {
-        return factor * ((a.date < b.date) ? -1 : (a.date > b.date) ? 1 : 0);
+        return 0;
       }
     });
   }

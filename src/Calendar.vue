@@ -1,52 +1,86 @@
 <template>
-  <v-container fluid>
-    <v-layout wrap data-app='true'>
-      <v-flex sm4 xs12 class='text-sm-left text-xs-center'>
-        <v-btn @click='$refs.calendar.prev()'>
-          <v-icon left>keyboard_arrow_left</v-icon> Prev
-        </v-btn>
-      </v-flex>
-      <v-flex sm4 xs12 class='text-xs-center'>
-        <span id='calmonth' class='title'>{{ [start, 'YYYY-MM-DD'] | moment('MMMM') }}</span>
-      </v-flex>
-      <v-flex sm4 xs12 class='text-sm-right text-xs-center'>
-        <v-btn @click='$refs.calendar.next()'>
-          Next <v-icon right>keyboard_arrow_right</v-icon>
-        </v-btn>
-      </v-flex>
+  <v-app>
+    <v-container fluid>
+      <v-row>
+        <v-col cols='12'>
+          <v-row align='center' justify='space-between'>
+            <v-col sm="2">
+              <v-btn @click='$refs.calendar.prev()'>
+                <v-icon left>keyboard_arrow_left</v-icon> Prev
+              </v-btn>
+            </v-col>
+            <v-col>
+              <v-card flat color='transparent' class='mx-auto' width='200px'>
+                <span id='calmonth' class='title'>{{ [start, 'YYYY-MM-DD'] | moment('MMMM YYYY') }}</span>
+                <v-badge>
+                  <template v-slot:badge>{{ numCart }}</template>
+                  <v-btn @click='showCart = true' icon>
+                    <v-icon>shopping_cart</v-icon>
+                  </v-btn>
+                </v-badge>
+              </v-card>
+            </v-col>
+            <v-col sm="2">
+              <v-btn class='float-right' @click='$refs.calendar.next()'>
+                Next <v-icon right>keyboard_arrow_right</v-icon>
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-col>
+      </v-row>
 
-      <v-flex xs12 class='mt-3'>
-        <v-sheet :height='calendarHeight'>
-          <v-calendar :key='sold.length' id='eventcal' ref='calendar' type='month' v-model='start'>
-            <template v-slot:day="{ year, month, day, past, date }">
-              <template v-for='ei in getEvents(year, month, day)'>
-                <v-badge class='badge' right :key='`${ei.id}-${ei.time}`' bottom overlap color='purple'>
-                  <template v-slot:badge>
-                    <span class='caption' v-if='ei.showTickets' :key='`span-${ei.id}-${ei.time}`'>{{ ei.avail }}</span>
-                  </template>
+      <v-row>
+        <v-col cols='12'>
+          <v-sheet :height='calendarHeight'>
+            <v-calendar :key='sold.length' id='eventcal' ref='calendar' type='month' v-model='start'>
+              <template v-slot:day="{ year, month, day, past, date }">
+                <v-container v-if='!past'>
+                  <template v-for='ei in getEvents(year, month, day)'>
+                    <v-tooltip right :key='`${ei.id}-${ei.time}`'>
+                      <template v-slot:activator="{ on }">
+                        <v-row @click='addToCart(ei, date)' v-on='on'>
+                          <v-col :style='{backgroundColor: ei.color, cursor: "pointer"}'
+                            class='white--text overline ml-1 pl-1 pr-0 pt-0 mt-1 pb-0 mb-1'>
+                            {{ [date + ' ' + ei.time, 'YYYY-MM-DD H:mm'] | moment('h:mm A') }}
+                          </v-col>
+                          <v-col :style='{backgroundColor: ei.color, cursor: "pointer"}'
+                            class='white--text overline pl-0 mr-1 pr-1 pt-0 mt-1 pb-0 mb-1'>
+                            Add To Cart
+                          </v-col>
+                        </v-row>
+                      </template>
+                      <span>{{ ei.name }}</span>
+                    </v-tooltip>
 
-                  <div v-if='!past'
+                  <!-- <v-badge class='badge' right :key='`${ei.id}-${ei.time}`' bottom overlap color='purple'>
+                    <template v-slot:badge>
+                      <span class='caption' v-if='ei.showTickets' :key='`span-${ei.id}-${ei.time}`'>{{ ei.avail }}</span>
+                    </template> -->
+
+                  <!-- <div v-if='!past'
                     v-ripple class='event' :style='{backgroundColor: ei.color, borderColor: ei.color }'
                     @click='addToCart(ei, date)'>
                     {{ [date + ' ' + ei.time, 'YYYY-MM-DD H:mm'] | moment('h:mm A') }}
                     - {{ ei.name }}
-                  </div>
-                </v-badge>
-              </template>
+                  </div> -->
+                <!-- </v-badge> -->
+                </template>
+              </v-container>
             </template>
           </v-calendar>
         </v-sheet>
-      </v-flex>
+      </v-col>
+      </v-row>
+    </v-container>
       <cart :show.sync='showCart' v-on:checkout-success='checkedOut($event)' />
-    </v-layout>
-  </v-container>
+  </v-app>
 </template>
 
 <script lang='ts'>
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import { Getter, Action } from 'vuex-class';
 import Product, { EventInfo } from '@/api/product';
-import { OrderDetails } from '@/api/paypal';
+import { OrderDetails, Item } from '@/api/paypal';
 import { ScheduleSold } from '@/api/tickets';
 import Cart from '@/components/Cart.vue';
 import moment from 'moment';
@@ -58,6 +92,7 @@ import moment from 'moment';
 })
 export default class Calendar extends Vue {
   @Getter('product/products') public prods!: Product[];
+  @Getter('cart/items') public cartList!: Item[];
   @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Action('cart/addCartItem') public addCartItem!: (payload: {ei: EventInfo, date: string}) => void;
   @Action('tickets/getSold') public getSold!: (payload: {from: moment.Moment, to: moment.Moment})
@@ -69,6 +104,12 @@ export default class Calendar extends Vue {
   public showCart = false;
   public showFinal = false;
   public sold: Map<string, ScheduleSold> = new Map();
+
+  public get numCart(): number {
+    return this.cartList.reduce((currSum, currItem) => {
+      return currSum + Number(currItem.quantity);
+    }, 0);
+  }
 
   public async created() {
     await this.loadProducts();
@@ -98,7 +139,7 @@ export default class Calendar extends Vue {
         const s = this.getMoment(sc.start, year);
         const e = this.getMoment(sc.end, year);
 
-        if (!d.isBetween(s, e, 'day') || !sc.selectedDays.includes(d.day())) {
+        if (!d.isBetween(s, e, 'day', '[]') || !sc.selectedDays.includes(d.day())) {
           continue;
         }
 
