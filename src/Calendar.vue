@@ -39,31 +39,26 @@
                     <v-tooltip right :key='`${ei.id}-${ei.time}`'>
                       <template v-slot:activator="{ on }">
                         <v-row @click='addToCart(ei, date)' v-on='on'>
-                          <v-col :style='{backgroundColor: ei.color, cursor: "pointer"}'
+                          <v-col cols='4' :style='{backgroundColor: ei.color, cursor: "pointer"}'
                             class='white--text overline ml-1 pl-1 pr-0 pt-0 mt-1 pb-0 mb-1'>
                             {{ [date + ' ' + ei.time, 'YYYY-MM-DD H:mm'] | moment('h:mm A') }}
                           </v-col>
-                          <v-col :style='{backgroundColor: ei.color, cursor: "pointer"}'
+                          <v-col cols='5' :style='{backgroundColor: ei.color, cursor: "pointer"}'
                             class='white--text overline pl-0 mr-1 pr-1 pt-0 mt-1 pb-0 mb-1'>
-                            Add To Cart
+                              Add To Cart
+                          </v-col>
+                          <v-col cols='1' class='overline pt-0 pb-0 mt-1 ml-0 pl-0' v-if='ei.showTickets'>
+                            <v-tooltip top>
+                              <template v-slot:activator="{on}">
+                                <span v-on='on'>{{ei.avail}}</span>
+                              </template>
+                              <span>{{ ei.avail }} Tickets Available</span>
+                            </v-tooltip>
                           </v-col>
                         </v-row>
                       </template>
                       <span>{{ ei.name }}</span>
                     </v-tooltip>
-
-                  <!-- <v-badge class='badge' right :key='`${ei.id}-${ei.time}`' bottom overlap color='purple'>
-                    <template v-slot:badge>
-                      <span class='caption' v-if='ei.showTickets' :key='`span-${ei.id}-${ei.time}`'>{{ ei.avail }}</span>
-                    </template> -->
-
-                  <!-- <div v-if='!past'
-                    v-ripple class='event' :style='{backgroundColor: ei.color, borderColor: ei.color }'
-                    @click='addToCart(ei, date)'>
-                    {{ [date + ' ' + ei.time, 'YYYY-MM-DD H:mm'] | moment('h:mm A') }}
-                    - {{ ei.name }}
-                  </div> -->
-                <!-- </v-badge> -->
                 </template>
               </v-container>
             </template>

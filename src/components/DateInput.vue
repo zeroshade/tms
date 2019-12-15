@@ -35,7 +35,8 @@ export default class DateInput extends Vue {
   @Prop(String) public readonly max!: string;
   @Prop(String) public readonly fieldCls!: string;
   @Prop(Boolean) public readonly required!: boolean;
-  @Prop([Array, Function]) public readonly events!: (date: string) => boolean | string[];
+  @Prop([Array, Function]) public readonly events!: ((date: string) => boolean) | string[];
+  @Prop({default: false, type: Boolean}) public readonly includeYear!: boolean;
 
   public rules = [
     (v: string) => (!this.required || !!v) || 'Cannot be empty',
@@ -53,7 +54,7 @@ export default class DateInput extends Vue {
       return '';
     }
     const [year, month, day] = date.split('-');
-    return `${month}/${day}`;
+    return (this.includeYear) ? `${month}/${day}/${year}` : `${month}/${day}`;
   }
 }
 </script>

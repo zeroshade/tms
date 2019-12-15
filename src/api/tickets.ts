@@ -9,6 +9,12 @@ export default interface TicketCategory {
   };
 }
 
+export function deleteCategoryReq(id: number): Request {
+  return new Request(BASEURL + `/tickets/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export function getCategoriesReq(): Request {
   return new Request(BASEURL + '/tickets', {
     method: 'GET',

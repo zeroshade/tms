@@ -2,9 +2,8 @@ import Vue from 'vue';
 import Vuex, { Module } from 'vuex';
 import { RootState, ProductState, TicketState } from './states';
 import CartModule from './cart';
-// import AuthModule from './authmod';
 import Product, { getProductsReq, putProduct } from '@/api/product';
-import TicketCategory, { getCategoriesReq, saveCategories, ScheduleSold, getCurrSold } from '@/api/tickets';
+import TicketCategory, { deleteCategoryReq, getCategoriesReq, saveCategories, ScheduleSold, getCurrSold } from '@/api/tickets';
 import moment from 'moment';
 import AuthModule from './auth';
 
@@ -86,6 +85,7 @@ const ticketModule: Module<TicketState, RootState> = {
       commit('saveCategories', cats);
     },
     async deleteCategory({commit}, id: number) {
+      await this.dispatch('auth/makeAuthReq', deleteCategoryReq(id), { root: true });
       commit('removeCategory', id);
     },
     async getSold({}, payload: {from: moment.Moment, to: moment.Moment}): Promise<ScheduleSold[]> {
