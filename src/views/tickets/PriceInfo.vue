@@ -50,6 +50,7 @@ export default class PriceInfo extends Vue {
   @Mutation('tickets/addNew') public addNew!: () => void;
   @Action('tickets/deleteCategory') public remove!: (id: number) => Promise<void>;
   @Action('tickets/saveCategories') public save!: (tc: TicketCategory[]) => Promise<void>;
+  @Action('tickets/loadCategories') public load!: () => Promise<void>;
 
   public localCats: TicketCategory[] = [];
 
@@ -84,7 +85,10 @@ export default class PriceInfo extends Vue {
     },
   ];
 
-  public mounted() {
+  public async mounted() {
+    if (this.categories.length === 0) {
+      await this.load();
+    }
     this.localCats = JSON.parse(JSON.stringify(this.categories));
   }
 

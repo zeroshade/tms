@@ -1,5 +1,5 @@
 import { Module } from 'vuex';
-import Product, { EventInfo } from '@/api/product';
+import { EventInfo } from '@/api/product';
 import { ShoppingCartState, CartItem, RootState } from './states';
 import { Item } from '@/api/paypal';
 import moment from 'moment';
@@ -7,7 +7,7 @@ import moment from 'moment';
 const cartModule: Module<ShoppingCartState, RootState> = {
   namespaced: true,
   state: {
-    items: [],
+    items: JSON.parse(localStorage.getItem('cart') || '[]'),
   },
   getters: {
     items(state) {
@@ -16,12 +16,14 @@ const cartModule: Module<ShoppingCartState, RootState> = {
   },
   mutations: {
     emptyCart(state: ShoppingCartState) {
+      localStorage.removeItem('cart');
       state.items = [];
     },
     cleanCart(state: ShoppingCartState) {
       state.items = state.items.filter((ci) => {
         return Number(ci.quantity) > 0;
       });
+      localStorage.setItem('cart', JSON.stringify(state.items));
     },
     addCartItem(state: ShoppingCartState, payload: Item) {
       const idx = state.items.findIndex((c) => c.sku === payload.sku);
@@ -33,17 +35,20 @@ const cartModule: Module<ShoppingCartState, RootState> = {
       const idx = state.items.findIndex((c) => ci.sku === c.sku);
       if (idx !== -1) {
         state.items.splice(idx, 1, ci);
+        localStorage.setItem('cart', JSON.stringify(state.items));
       }
     },
     updateFullCart(state: ShoppingCartState, items: Item[]) {
       state.items = items.filter((ci) => {
         return Number(ci.quantity) > 0;
       });
+      localStorage.setItem('cart', JSON.stringify(state.items));
     },
     removeFromCart(state: ShoppingCartState, sku: string) {
       const idx = state.items.findIndex((ci) => ci.sku === sku);
       if (idx !== -1) {
         state.items.splice(idx, 1);
+        localStorage.setItem('cart', JSON.stringify(state.items));
       }
     },
   },

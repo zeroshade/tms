@@ -9,8 +9,14 @@ export default interface TicketCategory {
   };
 }
 
-export async function saveCategories(tc: TicketCategory[]) {
-  const response = await fetch(BASEURL + '/tickets', {
+export function getCategoriesReq(): Request {
+  return new Request(BASEURL + '/tickets', {
+    method: 'GET',
+  });
+}
+
+export function saveCategories(tc: TicketCategory[]): Request {
+  return new Request(BASEURL + '/tickets', {
     method: 'PUT',
     mode: 'cors',
     cache: 'no-cache',

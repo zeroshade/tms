@@ -4,16 +4,16 @@ import { RootState, ProductState, TicketState } from './states';
 import CartModule from './cart';
 // import AuthModule from './authmod';
 import Product, { getProductsReq, putProduct } from '@/api/product';
-import TicketCategory, { saveCategories, ScheduleSold, getCurrSold } from '@/api/tickets';
+import TicketCategory, { getCategoriesReq, saveCategories, ScheduleSold, getCurrSold } from '@/api/tickets';
 import moment from 'moment';
 import AuthModule from './auth';
-import { BASEURL } from '@/api/utils';
+
 
 Vue.use(Vuex);
 
 const sampleTicketCats: TicketCategory[] = [
   {
-    id: 0,
+    id: 2,
     name: 'Price 2',
     categories: {
       child: '52.0',
@@ -32,55 +32,10 @@ const sampleTicketCats: TicketCategory[] = [
   },
 ];
 
-const sampleProds: Product[] = [
-  {
-    id: 1,
-    name: 'Fluke 7am to 12:30',
-    desc: 'weekday fluke express',
-    color: 'blue',
-    publish: true,
-    showTickets: true,
-    schedList: [
-      {
-        ticketsAvail: 10,
-        start: '2019-08-01',
-        end: '2019-12-30',
-        selectedDays: [1, 2, 3, 4],
-        notAvailArray: [],
-        timeArray: [
-          {time: '12:00', price: 'Price 1'},
-          {time: '14:30', price: 'Price 2'},
-        ],
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: 'Sea Bass 7am to 4pm',
-    desc: '',
-    color: 'red',
-    publish: true,
-    showTickets: true,
-    schedList: [
-      {
-        ticketsAvail: 50,
-        start: '2019-06-09',
-        end: '2019-11-30',
-        selectedDays: [1, 3, 5],
-        notAvailArray: [],
-        timeArray: [
-          { time: '12:00', price: 'Price 1' },
-          { time: '14:45', price: 'Price 2' },
-        ],
-      },
-    ],
-  },
-];
-
 const ticketModule: Module<TicketState, RootState> = {
   namespaced: true,
   state: {
-    categoryList: sampleTicketCats,
+    categoryList: [],
   },
   getters: {
     categories(state) {
@@ -127,7 +82,7 @@ const ticketModule: Module<TicketState, RootState> = {
   },
   actions: {
     async saveCategories({commit, dispatch}, cats: TicketCategory[]) {
-      await saveCategories(cats);
+      await dispatch('auth/makeAuthReq', saveCategories(cats), { root: true });
       commit('saveCategories', cats);
     },
     async deleteCategory({commit}, id: number) {
@@ -135,6 +90,10 @@ const ticketModule: Module<TicketState, RootState> = {
     },
     async getSold({}, payload: {from: moment.Moment, to: moment.Moment}): Promise<ScheduleSold[]> {
       return await getCurrSold(payload.from, payload.to);
+    },
+    async loadCategories({commit}) {
+      const resp = await fetch(getCategoriesReq());
+      commit('saveCategories', await resp.json());
     },
   },
 };
@@ -167,14 +126,12 @@ const productModule: Module<ProductState, RootState> = {
     },
   },
   actions: {
-    async saveProduct({commit, dispatch}, prod: Product) {
-      const resp = await dispatch('auth/makeAuthReq', putProduct(prod), { root: true });
-
-      // commit('updateProd', await resp.json());
+    async saveProduct({dispatch}, prod: Product) {
+      await dispatch('auth/makeAuthReq', putProduct(prod), { root: true });
     },
     async loadProducts({commit, dispatch}) {
+      dispatch('tickets/loadCategories', null, {root: true });
       const resp = await fetch(getProductsReq());
-      // const resp = await dispatch('auth/makeAuthReq', getProductsReq(), { root: true });
       commit('setProducts', await resp.json());
     },
   },
