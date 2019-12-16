@@ -5,8 +5,10 @@ import router from './router';
 import store from './store';
 import './registerServiceWorker';
 import 'roboto-fontface/css/roboto/roboto-fontface.css';
+import VueMoment from 'vue-moment';
 
 Vue.config.productionTip = false;
+Vue.use(VueMoment);
 new Vue({
   vuetify,
   router,

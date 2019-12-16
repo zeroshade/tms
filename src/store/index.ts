@@ -3,33 +3,14 @@ import Vuex, { Module } from 'vuex';
 import { RootState, ProductState, TicketState } from './states';
 import CartModule from './cart';
 import Product, { getProductsReq, putProduct } from '@/api/product';
-import TicketCategory, { deleteCategoryReq, getCategoriesReq, saveCategories, ScheduleSold, getCurrSold } from '@/api/tickets';
+import TicketCategory, { deleteCategoryReq, getCategoriesReq, saveCategories,
+  ScheduleSold, getCurrSold, getOrdersReq } from '@/api/tickets';
+import { Item, OrderDetails } from '@/api/paypal';
 import moment from 'moment';
 import AuthModule from './auth';
 
 
 Vue.use(Vuex);
-
-const sampleTicketCats: TicketCategory[] = [
-  {
-    id: 2,
-    name: 'Price 2',
-    categories: {
-      child: '52.0',
-      adult: '100.0',
-      senior: '0',
-    },
-  },
-  {
-    id: 1,
-    name: 'Price 1',
-    categories: {
-      child: '40.0',
-      adult: '60.0',
-      senior: '40.0',
-    },
-  },
-];
 
 const ticketModule: Module<TicketState, RootState> = {
   namespaced: true,
@@ -137,6 +118,15 @@ const productModule: Module<ProductState, RootState> = {
   },
 };
 
+export interface OrderedItem extends Item {
+  coid: string;
+}
+
+export interface OrderResponse {
+  items: OrderedItem[];
+  orders: OrderDetails[];
+}
+
 export default new Vuex.Store<RootState>({
   modules: {
     product: productModule,
@@ -153,6 +143,9 @@ export default new Vuex.Store<RootState>({
     },
   },
   actions: {
-
+    async getOrders({dispatch}, date: string): Promise<OrderResponse> {
+      const resp = await dispatch('auth/makeAuthReq', getOrdersReq(date));
+      return await resp.json();
+    }
   },
 });

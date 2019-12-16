@@ -1,6 +1,5 @@
 import Product, { EventInfo } from '@/api/product';
 import TicketCategory from '@/api/tickets';
-import { Auth0UserProfile } from 'auth0-js';
 import { Auth } from '@/api/auth';
 import { User } from '@/api/users';
 import { Item } from '@/api/paypal';

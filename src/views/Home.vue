@@ -5,7 +5,7 @@
     </v-row>
     <v-row>
       <v-col>
-        <v-data-table :headers='headers' :items='prods' class='elevation-1'>
+        <v-data-table :loading='loading' loading-text='Loading Products...' :headers='headers' :items='prods' class='elevation-1'>
           <template v-slot:item.publish="{item}">
             {{ item.publish ? 'Y' : 'N' }}
           </template>
@@ -56,9 +56,12 @@ export default class Home extends Vue {
       sortable: false,
     },
   ];
+  public loading = false;
 
   public async created() {
+    this.loading = true;
     await this.loadProducts();
+    this.loading = false;
   }
 }
 </script>

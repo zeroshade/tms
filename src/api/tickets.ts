@@ -47,3 +47,11 @@ export async function getCurrSold(from: moment.Moment, to: moment.Moment): Promi
   });
   return await response.json();
 }
+
+export function getOrdersReq(date: string): Request {
+  return new Request(BASEURL + `/items/${date}`, {
+    method: 'GET',
+    mode: 'cors',
+    cache: 'no-cache',
+  });
+}

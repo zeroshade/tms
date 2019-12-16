@@ -7,7 +7,7 @@
     </v-layout>
     <v-layout fluid>
       <v-flex>
-        <v-data-table :headers='headers' :items='users' class='elevation-1'>
+        <v-data-table :loading='loading' loading-text='Loading Users...' :headers='headers' :items='users' class='elevation-1'>
           <template v-slot:items="{item}">
             <td>{{ item.name }}</td>
             <td>{{ item.username }}</td>
@@ -55,13 +55,16 @@ export default class UsersHome extends Vue {
       sortable: false,
     },
   ];
+  public loading = false;
 
   public async remove(u: User) {
     await this.deleteUser(u.user_id);
   }
 
   public async mounted() {
+    this.loading = true;
     await this.getUsers();
+    this.loading = false;
   }
 }
 </script>
