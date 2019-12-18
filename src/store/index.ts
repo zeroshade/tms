@@ -3,9 +3,10 @@ import Vuex, { Module } from 'vuex';
 import { RootState, ProductState, TicketState } from './states';
 import CartModule from './cart';
 import Product, { getProductsReq, putProduct } from '@/api/product';
-import TicketCategory, { deleteCategoryReq, getCategoriesReq, saveCategories,
-  ScheduleSold, getCurrSold, getOrdersReq } from '@/api/tickets';
-import { Item, OrderDetails } from '@/api/paypal';
+import TicketCategory, { CheckoutInfo, getPurchaseItemsReq,
+  deleteCategoryReq, getCategoriesReq, saveCategories,
+  ScheduleSold, getCurrSold, getOrdersReq, getCheckoutIdsReq } from '@/api/tickets';
+import { OrderDetails, Item } from '@/api/paypal';
 import moment from 'moment';
 import AuthModule from './auth';
 
@@ -75,6 +76,14 @@ const ticketModule: Module<TicketState, RootState> = {
     async loadCategories({commit}) {
       const resp = await fetch(getCategoriesReq());
       commit('saveCategories', await resp.json());
+    },
+    async getCheckouts({}, email: string): Promise<CheckoutInfo[]> {
+      const resp = await fetch(getCheckoutIdsReq(email));
+      return await resp.json();
+    },
+    async getPurchases({}, checkoutId: string): Promise<{items: Item[], name: string, email: string, payer: string}> {
+      const resp = await fetch(getPurchaseItemsReq(checkoutId));
+      return await resp.json();
     },
   },
 };

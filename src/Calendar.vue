@@ -18,6 +18,11 @@
                     <v-icon>shopping_cart</v-icon>
                   </v-btn>
                 </v-badge>
+                <boarding-pass :max-width='750'>
+                  <template v-slot:default='{ on }'>
+                    <v-btn v-on='on'>Get Boarding Passes</v-btn>
+                  </template>
+                </boarding-pass>
               </v-card>
             </v-col>
             <v-col sm="2">
@@ -59,15 +64,15 @@
                       </template>
                       <span>{{ ei.name }}</span>
                     </v-tooltip>
-                </template>
-              </v-container>
-            </template>
-          </v-calendar>
-        </v-sheet>
-      </v-col>
+                  </template>
+                </v-container>
+              </template>
+            </v-calendar>
+          </v-sheet>
+        </v-col>
       </v-row>
     </v-container>
-      <cart :show.sync='showCart' v-on:checkout-success='checkedOut($event)' />
+    <cart :show.sync='showCart' v-on:checkout-success='checkedOut($event)' />
   </v-app>
 </template>
 
@@ -78,11 +83,13 @@ import Product, { EventInfo } from '@/api/product';
 import { OrderDetails, Item } from '@/api/paypal';
 import { ScheduleSold } from '@/api/tickets';
 import Cart from '@/components/Cart.vue';
+import BoardingPass from '@/components/BoardingPass.vue';
 import moment from 'moment';
 
 @Component({
   components: {
     Cart,
+    BoardingPass,
   },
 })
 export default class Calendar extends Vue {

@@ -55,3 +55,32 @@ export function getOrdersReq(date: string): Request {
     cache: 'no-cache',
   });
 }
+
+export interface CheckoutInfo {
+  checkoutId: string;
+  created: Date;
+}
+
+export function getCheckoutIdsReq(email: string): Request {
+  return new Request(BASEURL + '/passes', {
+    method: 'POST',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-cache',
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function getPurchaseItemsReq(checkoutId: string): Request {
+  return new Request(BASEURL + '/passes', {
+    method: 'POST',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-cache',
+    body: JSON.stringify({checkoutId}),
+  });
+}

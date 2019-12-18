@@ -14,6 +14,7 @@
         v-model="formatted"
         :label='label'
         :rules='rules'
+        :error-messages="errors"
         prepend-icon="event"
         readonly
         v-on="on" />
@@ -35,6 +36,7 @@ export default class DateInput extends Vue {
   @Prop(String) public readonly max!: string;
   @Prop(String) public readonly fieldCls!: string;
   @Prop(Boolean) public readonly required!: boolean;
+  @Prop({ type: [Array, String], default: [] }) public readonly errors!: string | string[];
   @Prop([Array, Function]) public readonly events!: ((date: string) => boolean) | string[];
   @Prop({default: false, type: Boolean}) public readonly includeYear!: boolean;
 
