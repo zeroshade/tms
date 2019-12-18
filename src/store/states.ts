@@ -3,8 +3,11 @@ import TicketCategory from '@/api/tickets';
 import { Auth } from '@/api/auth';
 import { User } from '@/api/users';
 import { Item } from '@/api/paypal';
+import { Config } from '@/api/config';
 
-export interface RootState {}
+export interface RootState {
+  config: Config;
+}
 
 export interface ProductState {
   productList: Product[];

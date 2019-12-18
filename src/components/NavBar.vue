@@ -59,6 +59,17 @@
           <v-list-item-title>Edit Price Categories</v-list-item-title>
         </v-list-item>
       </v-list-group>
+
+      <v-list-group no-action prepend-icon="settings_applications" value="true">
+        <template v-slot:activator>
+          <v-list-item>
+            <v-list-item-title>Config</v-list-item-title>
+          </v-list-item>
+        </template>
+        <v-list-item :to="{name: 'config'}">
+          <v-list-item-title>Edit Config</v-list-item-title>
+        </v-list-item>
+      </v-list-group>
     </v-list>
     <v-btn class='ml-10' @click='logout()'>Logout</v-btn>
   </v-navigation-drawer>

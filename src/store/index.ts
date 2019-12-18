@@ -7,6 +7,7 @@ import TicketCategory, { CheckoutInfo, getPurchaseItemsReq,
   deleteCategoryReq, getCategoriesReq, saveCategories,
   ScheduleSold, getCurrSold, getOrdersReq, getCheckoutIdsReq } from '@/api/tickets';
 import { OrderDetails, Item } from '@/api/paypal';
+import { Config, getConfigReq, updateConfigReq } from '@/api/config';
 import moment from 'moment';
 import AuthModule from './auth';
 
@@ -144,17 +145,33 @@ export default new Vuex.Store<RootState>({
     auth: AuthModule,
   },
   state: {
-
+    config: {emailContent: '', passTitle: '', notifyNumber: '', emailFrom: '', emailName: ''},
+  },
+  getters: {
+    config(state) {
+      return state.config;
+    },
   },
   mutations: {
-    logError(state: RootState, err: Error) {
-      console.log(err);
+    logError(state: RootState, obj: any) {
+      console.log(obj);
+    },
+    setConfig(state: RootState, conf: Config) {
+      state.config = conf;
     },
   },
   actions: {
     async getOrders({dispatch}, date: string): Promise<OrderResponse> {
       const resp = await dispatch('auth/makeAuthReq', getOrdersReq(date));
       return await resp.json();
-    }
+    },
+    async loadConfig({commit}): Promise<void> {
+      const resp = await fetch(getConfigReq());
+      commit('setConfig', await resp.json());
+    },
+    async updateConfig({commit, dispatch}, conf: Config): Promise<void> {
+      await dispatch('auth/makeAuthReq', updateConfigReq(conf));
+      commit('setConfig', conf);
+    },
   },
 });

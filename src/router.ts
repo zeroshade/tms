@@ -84,5 +84,11 @@ export default new Router({
       component: () => import('@/views/users/AddUser.vue'),
       beforeEnter: authGuard,
     },
+    {
+      path: '/config',
+      name: 'config',
+      component: () => import('@/views/config/Config.vue'),
+      beforeEnter: authGuard,
+    },
   ],
 });

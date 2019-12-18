@@ -78,7 +78,7 @@
 
 <script lang='ts'>
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import { Getter, Action } from 'vuex-class';
+import { Getter, Action, Mutation } from 'vuex-class';
 import Product, { EventInfo } from '@/api/product';
 import { OrderDetails, Item } from '@/api/paypal';
 import { ScheduleSold } from '@/api/tickets';
@@ -95,6 +95,7 @@ import moment from 'moment';
 export default class Calendar extends Vue {
   @Getter('product/products') public prods!: Product[];
   @Getter('cart/items') public cartList!: Item[];
+  @Mutation('logError') public logErr!: (err: any) => void;
   @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Action('cart/addCartItem') public addCartItem!: (payload: {ei: EventInfo, date: string}) => void;
   @Action('tickets/getSold') public getSold!: (payload: {from: moment.Moment, to: moment.Moment})
@@ -127,7 +128,18 @@ export default class Calendar extends Vue {
   }
 
   public checkedOut(event: OrderDetails) {
-    console.log(event);
+    this.logErr(event);
+    fetch(process.env.VUE_APP_BACKEND_HOST + '/confirmed', {
+      method: 'POST',
+      mode: 'cors',
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({checkoutId: event.id}),
+    }).then((resp) => {
+      this.logErr(resp);
+    });
   }
 
   public getEvents(year: number, month: number, day: number): EventInfo[] {

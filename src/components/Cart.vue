@@ -106,6 +106,7 @@ export default class Cart extends Vue {
   @Mutation('cart/cleanCart') public cleanCart!: () => void;
   @Mutation('cart/removeFromCart') public removeFromCart!: (id: string) => void;
   @Mutation('cart/emptyCart') public emptyCart!: () => void;
+  @Mutation('logError') public logErr!: (err: any) => void;
 
   public headers = [
     { text: 'Type', align: 'left', value: 'name', sortable: false},
@@ -137,7 +138,7 @@ export default class Cart extends Vue {
   };
 
   public errorHandler(err: Error) {
-    console.log(err);
+    this.logErr(err);
   }
 
   public async clickcheck(data: ClickData, actions: ClickActions) {
