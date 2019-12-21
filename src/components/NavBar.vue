@@ -11,7 +11,7 @@
     </v-toolbar>
     <v-divider />
     <v-list dense class='pt-0'>
-      <v-list-item :to='{name: "home"}'>
+      <v-list-item exact :to='{name: "home"}'>
         <v-list-item-action>
           <v-icon>home</v-icon>
         </v-list-item-action>
