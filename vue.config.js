@@ -2,6 +2,14 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   // publicPath: '/admin/',
+  chainWebpack: config => {
+    config
+      .plugin('html-calendar')
+      .tap(args => {
+        args[0].minify = false;
+        return args;
+      })
+  },
   pages: {
     index: {
       entry: 'src/main.ts',
