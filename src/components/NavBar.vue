@@ -11,7 +11,7 @@
     </v-toolbar>
     <v-divider />
     <v-list dense class='pt-0'>
-      <v-list-item to='/'>
+      <v-list-item :to='{name: "home"}'>
         <v-list-item-action>
           <v-icon>home</v-icon>
         </v-list-item-action>
@@ -57,6 +57,17 @@
         </template>
         <v-list-item :to="{name: 'ticketprice'}">
           <v-list-item-title>Edit Price Categories</v-list-item-title>
+        </v-list-item>
+      </v-list-group>
+
+      <v-list-group no-action prepend-icon="assignment" value="true">
+        <template v-slot:activator>
+          <v-list-item>
+            <v-list-item-title>Reports</v-list-item-title>
+          </v-list-item>
+        </template>
+        <v-list-item exact :to="{name: 'reporthome'}">
+          <v-list-item-title>Home</v-list-item-title>
         </v-list-item>
       </v-list-group>
 

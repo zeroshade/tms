@@ -1,12 +1,12 @@
 <template>
-  <v-container>
-    <v-layout fluid>
-      <v-flex>
+  <v-container fluid>
+    <v-row>
+      <v-col>
         <div class='headline mb-3'>Users</div>
-      </v-flex>
-    </v-layout>
-    <v-layout fluid>
-      <v-flex>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col>
         <v-data-table :loading='loading' loading-text='Loading Users...' :headers='headers' :items='users' class='elevation-1'>
           <template v-slot:items="{item}">
             <td>{{ item.name }}</td>
@@ -15,8 +15,8 @@
             <td><v-btn v-if='item.app_metadata.role !== "admin"' @click='remove(item)' icon><v-icon small>delete</v-icon></v-btn></td>
           </template>
         </v-data-table>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 

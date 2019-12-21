@@ -27,4 +27,5 @@ declare module 'tiptap-vuetify' {
   export const ListItem: Extension;
   export const Link: Extension;
   export const History: Extension;
+  export const Image: Extension;
 }

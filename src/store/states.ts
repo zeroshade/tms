@@ -4,9 +4,11 @@ import { Auth } from '@/api/auth';
 import { User } from '@/api/users';
 import { Item } from '@/api/paypal';
 import { Config } from '@/api/config';
+import { Report } from '@/api/reports';
 
 export interface RootState {
   config: Config;
+  reports: Report[];
 }
 
 export interface ProductState {

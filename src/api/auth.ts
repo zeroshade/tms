@@ -24,7 +24,7 @@ export class Auth {
     this.auth0Client = await createAuth0Client({
       domain: process.env.VUE_APP_AUTH0_DOMAIN || '',
       client_id: process.env.VUE_APP_AUTH0_CLIENT_ID || '',
-      redirect_uri: window.location.origin,
+      redirect_uri: window.location.origin + window.location.pathname,
       audience: 'https://tmszero.auth0.com/api/v2/',
     });
 

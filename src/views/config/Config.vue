@@ -58,7 +58,10 @@
 import { Component, Vue } from 'vue-property-decorator';
 import { Action, Getter } from 'vuex-class';
 import { Config } from '@/api/config';
-import { TiptapVuetify, Heading, Bold, Italic, Underline, Paragraph, BulletList, OrderedList, ListItem, Link, History } from 'tiptap-vuetify';
+import {
+  TiptapVuetify, Heading, Bold, Italic, Underline,
+  Paragraph, BulletList, OrderedList, ListItem, Link, History,
+} from 'tiptap-vuetify';
 
 @Component({
   components: {
