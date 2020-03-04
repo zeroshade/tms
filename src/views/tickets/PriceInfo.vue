@@ -23,7 +23,7 @@
               <v-btn class='ml-3 mr-4' color='primary' @click='addNew()'>
                 Add New <v-icon right>add_circle</v-icon>
               </v-btn>
-              <v-btn color='secondary' @click='save(localCats)'>
+              <v-btn color='secondary' @click='saveCats()'>
                 Save Changes <v-icon right>save</v-icon>
               </v-btn>
             </div>
@@ -47,9 +47,8 @@ import InlineEdit from '@/components/InlineEdit.vue';
 })
 export default class PriceInfo extends Vue {
   @Getter('tickets/categories') public readonly categories!: TicketCategory[];
-  @Mutation('tickets/addNew') public addNew!: () => void;
   @Action('tickets/deleteCategory') public remove!: (id: number) => Promise<void>;
-  @Action('tickets/saveCategories') public save!: (tc: TicketCategory[]) => Promise<void>;
+  @Action('tickets/saveCategories') public save!: (tc: TicketCategory[]) => Promise<TicketCategory[]>;
   @Action('tickets/loadCategories') public load!: () => Promise<void>;
 
   public localCats: TicketCategory[] = [];
@@ -84,6 +83,22 @@ export default class PriceInfo extends Vue {
       sortable: false,
     },
   ];
+
+  public async saveCats() {
+    this.localCats = await this.save(this.localCats);
+  }
+
+  public addNew() {
+    this.localCats.push({
+      id: 0,
+      name: 'Temp',
+      categories: {
+        adult: '0.00',
+        child: '0.00',
+        senior: '0.00',
+      },
+    });
+  }
 
   public async mounted() {
     if (this.categories.length === 0) {

@@ -32,7 +32,7 @@ export default class App extends Vue {
 
   public logout() {
     this.logMeOut({
-      returnTo: window.location.origin + window.location.pathname,
+      returnTo: window.location.origin + '/admin/',
     });
   }
 }

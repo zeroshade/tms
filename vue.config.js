@@ -1,7 +1,9 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  // publicPath: '/admin/',
+  "transpileDependencies": [
+    "vuetify"
+  ],
   chainWebpack: config => {
     config
       .plugin('html-calendar')

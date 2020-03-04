@@ -13,6 +13,9 @@ const cartModule: Module<ShoppingCartState, RootState> = {
     items(state) {
       return state.items;
     },
+    total(state): number {
+      return state.items.reduce((acc, cur) => Number(cur.quantity) + acc, 0);
+    },
   },
   mutations: {
     emptyCart(state: ShoppingCartState) {
@@ -29,6 +32,10 @@ const cartModule: Module<ShoppingCartState, RootState> = {
       const idx = state.items.findIndex((c) => c.sku === payload.sku);
       if (idx === -1) {
         state.items.push(payload);
+      } else {
+        const curquant = Number(state.items[idx].quantity);
+        payload.quantity = (Number(payload.quantity) + curquant).toString();
+        state.items.splice(idx, 1, payload);
       }
     },
     updateCartItem(state: ShoppingCartState, ci: Item) {
@@ -54,15 +61,15 @@ const cartModule: Module<ShoppingCartState, RootState> = {
   },
   actions: {
     addCartItem({commit, rootGetters}, payload: { ei: EventInfo, date: string }) {
-      const d = new Date(payload.date + ' ' + payload.ei.time);
+      const d = moment(payload.date + ' ' + payload.ei.startTime, 'YYYY-MM-DD HH:mm');
 
       const priceCat = rootGetters['tickets/categoryByName'](payload.ei.price);
       if (priceCat === null) { return; }
-      const prod = payload.ei.name + ', ' + moment(d).format('M/D/Y, h:mm A');
+      const prod = payload.ei.name + ', ' + d.format('M/D/Y, h:mm A');
       for (const key of Object.keys(priceCat.categories)) {
         if (Number(priceCat.categories[key]) > 0) {
           commit('addCartItem', {
-            sku: payload.ei.id.toString() + key.toUpperCase() + d.getTime().toString(),
+            sku: payload.ei.id.toString() + key.toUpperCase() + String(d.unix()),
             name: key[0].toUpperCase() + key.slice(1) + ' Ticket',
             description: prod,
             quantity: '0',

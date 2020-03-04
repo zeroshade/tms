@@ -9,7 +9,8 @@ interface PInfo {
 }
 
 export interface ScheduleTime {
-  time: string;
+  startTime: string;
+  endTime: string;
   price: string;
   avail?: number;
 }
@@ -31,7 +32,11 @@ interface PData {
 type Product = PInfo & PData;
 export default Product;
 
-export type EventInfo = PInfo & ScheduleTime;
+type Event = PInfo & ScheduleTime;
+export interface EventInfo extends Event {
+  start: string;
+  end: string;
+}
 
 export function getProductsReq(): Request {
   return new Request(BASEURL + '/');
@@ -40,6 +45,9 @@ export function getProductsReq(): Request {
 import moment from 'moment';
 
 export function putProduct(p: Product): Request {
+  if (p.id === -1) {
+    p.id = 0;
+  }
   for (const s of p.schedList) {
     s.start = moment(s.start).format('MM-DD');
     s.end = moment(s.end).format('MM-DD');
@@ -53,5 +61,13 @@ export function putProduct(p: Product): Request {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(p),
+  });
+}
+
+export function deleteProduct(p: Product): Request {
+  return new Request(BASEURL + `/product/${p.id}`, {
+    method: 'DELETE',
+    mode: 'cors',
+    cache: 'no-cache',
   });
 }

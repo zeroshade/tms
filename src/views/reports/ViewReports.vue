@@ -11,7 +11,7 @@
             {{ value | moment('M/D/YY, h:mm A') }}
           </template>
           <template v-slot:item.content='{ value }'>
-            <div v-html='value' class='content-row'></div>
+            <div style='max-width: 750px; min-height: 50px'  v-html='value' class='content-row'></div>
           </template>
           <template v-slot:item.actions='{ item }'>
             <v-btn icon :to='{ name: "editreport", params: { id: item.id } }'><v-icon>edit</v-icon></v-btn>

@@ -1,7 +1,8 @@
 <template>
   <v-edit-dialog
     :return-value.sync='saved'
-    lazy
+    large
+    persistent
     @open='saved = value; $emit("open")'
     @save='saved ? $emit("input", isnum ? Number(saved).toFixed(2) : saved) && $emit("save") : $emit("cancel")'
     @cancel='$emit("cancel")'

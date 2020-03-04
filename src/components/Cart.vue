@@ -11,7 +11,7 @@
       <v-card-text>
         <v-data-table dense :custom-sort='customSort' group-by='description' item-key='sku'
            hide-default-footer :items='items' :headers='headers' class='elevation-3'>
-          <template v-slot:group.header="{group, groupBy }">
+          <template v-slot:group.header="{group }">
             <strong class='ml-3'>{{ group }}</strong>
           </template>
           <template v-slot:item.unit_amount.value="{ value }">
@@ -45,14 +45,14 @@
       <v-divider />
       <v-card-actions>
         <v-btn @click='sync = false'>
-          Save
+          Save Shopping Cart
         </v-btn>
         <v-spacer />
         <p id='error-checkout' class='pr-2' v-if='errormsg.length > 0'>
           {{ errormsg }}
         </p>
         <paypal-checkout
-          :items='items'
+          :items='items.filter((i) => i.quantity > 0)'
           currency='USD'
           :amount='subtotal.toFixed(2)'
           :context='appcontext'
@@ -133,6 +133,7 @@ export default class Cart extends Vue {
   };
 
   public readonly style = {
+    label: BtnLabel.CHECKOUT,
     layout: BtnLayout.HORIZONTAL,
     tagline: false,
   };

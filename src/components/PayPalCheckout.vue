@@ -54,7 +54,8 @@ export default class PaypalCheckout extends Vue {
 
   public readonly intent = OrderIntent.CAPTURE;
 
-  public mounted() {
+  public async mounted() {
+    await this.$loadScript(`https://www.paypal.com/sdk/js?client-id=${process.env.VUE_APP_PAYPAL_ID}&currency=USD&disable-funding=credit&merchant-id=${process.env.VUE_APP_MERCHANT_ID}`);
     paypal.Buttons({
       createOrder: (data: object, actions: CreateActions): Promise<object> => {
         return actions.order.create({

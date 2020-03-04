@@ -56,9 +56,10 @@ const ticketModule: Module<TicketState, RootState> = {
     },
   },
   actions: {
-    async saveCategories({commit, dispatch}, cats: TicketCategory[]) {
+    async saveCategories({state, dispatch}, cats: TicketCategory[]): Promise<TicketCategory[]> {
       await dispatch('auth/makeAuthReq', saveCategories(cats), { root: true });
-      commit('saveCategories', cats);
+      await dispatch('loadCategories');
+      return state.categoryList;
     },
     async deleteCategory({commit}, id: number) {
       await this.dispatch('auth/makeAuthReq', deleteCategoryReq(id), { root: true });

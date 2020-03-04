@@ -1,6 +1,7 @@
 <template>
   <v-container>
     <div class='headline'>{{ autherror }}</div>
+    <div class='headline'>Could not Log In!</div>
   </v-container>
 </template>
 

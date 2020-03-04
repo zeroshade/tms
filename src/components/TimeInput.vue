@@ -21,7 +21,11 @@
         v-on="on" />
     </template>
     <v-time-picker v-model='selected' ampm-in-title
-      @click:minute='$refs.menu.save(selected)' full-width />
+      full-width :min='min' :max='max'>
+      <v-btn text @click='selected = value; $refs.menu.save(value)'>Cancel</v-btn>
+      <v-spacer />
+      <v-btn text @click='$refs.menu.save(selected)'>Save</v-btn>
+    </v-time-picker>
   </v-menu>
 </template>
 
@@ -34,6 +38,8 @@ export default class TimeInput extends Vue {
   @Prop(String) public readonly label!: string;
   @Prop(String) public readonly fieldCls!: string;
   @Prop(Boolean) public readonly required!: boolean;
+  @Prop() public readonly max!: string | undefined;
+  @Prop() public readonly min!: string | undefined;
 
   public rules = [
     (v: string) => (!this.required || !!v) || 'Cannot be empty',

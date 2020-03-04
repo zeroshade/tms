@@ -119,7 +119,7 @@ export default class ProductForm extends Vue {
   @Getter('product/products') public prods!: Product[];
   @Prop({ default: -1}) public id!: number;
 
-  public stepper = 0;
+  public stepper = 1;
 
   public name = '';
   public desc = '';
@@ -166,11 +166,13 @@ export default class ProductForm extends Vue {
   }
 
   public addSched() {
+    const end = new Date();
+    end.setMonth(11);
     this.schedList.push({
       timeArray: [],
       notAvailArray: [],
       start: new Date().toISOString().substr(0, 10),
-      end: new Date().toISOString().substr(0, 10),
+      end: end.toISOString().substr(0, 10),
       selectedDays: [],
       ticketsAvail: 50,
     });

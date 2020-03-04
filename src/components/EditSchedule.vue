@@ -36,13 +36,19 @@
           Must have at least one time set
         </p>
       </v-col>
-      <v-col cols="8" md="4">
+      <v-col cols="8" md="5">
         <v-row no-gutters dense
           align='start' justify='start'
           v-for='(tm, idx) in sched.timeArray' :key='`time-${idx}`'>
           <v-col v-if='sched.timeArray.length'>
-            <time-input v-model='sched.timeArray[idx].time'
-             field-cls='mr-0 pb-1 mt-0 pt-0' label='Trip Time' />
+            <time-input v-model='sched.timeArray[idx].startTime' required
+             field-cls='mr-0 pb-1 mt-0 pt-0' label='Start Time'
+             :max='sched.timeArray[idx].endTime' />
+          </v-col>
+          <v-col v-if='sched.timeArray.length'>
+            <time-input v-model='sched.timeArray[idx].endTime' required
+              field-cls='ml-1 pb-1 mt-0 pt-0' label='End Time'
+              :min='sched.timeArray[idx].startTime' />
           </v-col>
           <v-col v-if='sched.timeArray.length'>
             <v-select label='Price Set' class='ml-1 pl-2 mt-0 pb-1'
@@ -56,7 +62,7 @@
           </v-col>
         </v-row>
       </v-col>
-      <v-col cols="4" md="3">
+      <v-col cols="4" md="2">
         <p>Not Available On
           <v-btn fab right dark small class='mx-2' fab color='purple'
             @click='sched.notAvailArray.push("")'>
@@ -122,6 +128,9 @@ export default class EditSchedule extends Vue {
 
   public validate(): boolean {
     this.showErrors = true;
+    for (const t of this.sched.timeArray) {
+      if (!t.startTime || !t.endTime) { return false; }
+    }
     return (this.sched.timeArray.length > 0);
   }
 
