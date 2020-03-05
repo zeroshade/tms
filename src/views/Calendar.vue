@@ -63,7 +63,7 @@
         </v-col>
       </v-row>
     </v-container>
-    <cart :show.sync='showCart' />
+    <cart :show.sync='showCart' @checkout-success='checkedOut($event)' />
   </v-app>
 </template>
 
@@ -73,6 +73,7 @@ import { Getter, Mutation, Action } from 'vuex-class';
 import Product, { EventInfo } from '@/api/product';
 import EventView from '@/components/EventView.vue';
 import { ScheduleSold } from '@/api/tickets';
+import { OrderDetails } from '@/api/paypal';
 import Cart from '@/components/Cart.vue';
 import moment from 'moment';
 import * as momd from 'moment';
@@ -120,6 +121,7 @@ export default class Calendar extends Vue {
   @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Action('tickets/getSold') public getSold!: (payload: {from: moment.Moment, to: moment.Moment})
     => Promise<ScheduleSold[]>;
+  @Action('cart/confirmOrder') public confirmOrder!: (checkoutId: string) => Promise<void>;
 
   public readonly calendarHeight = process.env.VUE_APP_CALENDAR_HEIGHT;
   public focus = '';
@@ -139,6 +141,10 @@ export default class Calendar extends Vue {
     'day': 'Day',
     '4day': '4 Days',
   };
+
+  public checkedOut(ev: OrderDetails) {
+    this.confirmOrder(ev.id);
+  }
 
   public setToday() {
     this.focus = this.today;
@@ -173,6 +179,19 @@ export default class Calendar extends Vue {
   }
 
   public showEvent(arg: {nativeEvent: Event, event: EventInfo}) {
+    this.getSold({
+      from: moment(arg.event.start, 'YYYY-MM-DD H:mm'),
+      to: moment(arg.event.end, 'YYYY-MM-DD H:mm'),
+    })
+    .then((v) => {
+      for (const s of v) {
+        if (moment(arg.event.start, 'YYYY-MM-DD H:mm').unix() === moment(s.stamp).unix() && arg.event.id === s.pid) {
+          arg.event.avail = arg.event.stock - s.qty;
+          break;
+        }
+      }
+    });
+
     const open = () => {
       this.selectedEvent = arg.event;
       this.selectedElement = arg.nativeEvent.target;
@@ -275,7 +294,12 @@ export default class Calendar extends Vue {
               if (sold.has(soldkey)) {
                 avail = stock - sold.get(soldkey)!.qty;
               }
-              events.push({...t, avail, ...p, start: startMoment.format('YYYY-MM-DD H:mm'), end: endMoment.format('YYYY-MM-DD H:mm')});
+              events.push({
+                stock,
+                ...t, avail, ...p,
+                start: startMoment.format('YYYY-MM-DD H:mm'),
+                end: endMoment.format('YYYY-MM-DD H:mm'),
+              });
             }
           }
         }

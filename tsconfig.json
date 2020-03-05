@@ -14,7 +14,8 @@
     "types": [
       "node",
       "webpack-env",
-      "vuetify"
+      "vuetify",
+      "./node_modules/@types/tween.js"
     ],
     "paths": {
       "@/*": [

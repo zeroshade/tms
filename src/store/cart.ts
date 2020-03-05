@@ -1,7 +1,7 @@
 import { Module } from 'vuex';
 import { EventInfo } from '@/api/product';
-import { ShoppingCartState, CartItem, RootState } from './states';
-import { Item } from '@/api/paypal';
+import { ShoppingCartState, RootState } from './states';
+import { Item, confirmOrder } from '@/api/paypal';
 import moment from 'moment';
 
 const cartModule: Module<ShoppingCartState, RootState> = {
@@ -60,6 +60,9 @@ const cartModule: Module<ShoppingCartState, RootState> = {
     },
   },
   actions: {
+    async confirmOrder({}, checkoutId: string) {
+      await fetch(confirmOrder(checkoutId));
+    },
     addCartItem({commit, rootGetters}, payload: { ei: EventInfo, date: string }) {
       const d = moment(payload.date + ' ' + payload.ei.startTime, 'YYYY-MM-DD HH:mm');
 

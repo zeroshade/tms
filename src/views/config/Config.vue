@@ -21,6 +21,9 @@
                     label='Phone Number to Notify On Purchase'
                     v-model='localConf.notifyNumber' />
                 </v-col>
+                <v-col md='4'>
+                  <v-switch v-model='localConf.sendSMS' label='Notify on Purchase' />
+                </v-col>
               </v-row>
               <v-row>
                 <v-col md='4'>
@@ -73,7 +76,9 @@ export default class ConfigView extends Vue {
   @Getter('config') public readonly conf!: Config;
   @Action('updateConfig') public update!: (conf: Config) => Promise<void>;
 
-  public localConf: Config = {emailContent: '', passTitle: '', notifyNumber: '', emailFrom: '', emailName: ''};
+  public localConf: Config = {
+    emailContent: '', passTitle: '', notifyNumber: '',
+    emailFrom: '', emailName: '', sendSMS: false};
 
   public extensions = [
     History,

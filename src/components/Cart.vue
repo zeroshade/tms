@@ -18,16 +18,14 @@
             {{ value | money }}
           </template>
           <template v-slot:item.quantity="{ item }">
-              <v-text-field
+              <v-select
+                v-model='item.quantity'
                 label='Quantity'
-                style='width: 75px;'
-                :rules='[(v) => Number(v) >= 0 || "Needs to be >=0"]'
-                min='0'
-                type='number'
-                v-model='item.quantity' />
+                style='width: 55px;'
+                :items='Array(30).fill().map((_, idx) => String(1 + idx))' />
           </template>
           <template v-slot:item.subtotal="{ item }">
-            {{ item.quantity * item.unit_amount.value | money }}
+            <animated-number :value='item.quantity * item.unit_amount.value' :format='(val) => "$" + Number(val).toFixed(2)' />
           </template>
           <template v-slot:item.remove="{ item }">
             <v-btn small icon @click='removeFromCart(item.sku)'><v-icon>delete</v-icon></v-btn>
@@ -36,7 +34,8 @@
             <v-divider />
             <div class='d-flex flex-row-reverse'>
               <p class='mr-2 mb-0'>
-                <strong>Total</strong> {{ subtotal | money }}
+                <strong class='pr-2'>Total:</strong>
+                <animated-number :value='subtotal' :format='(val) => "$" + Number(val).toFixed(2)' />
               </p>
             </div>
           </template>
@@ -77,6 +76,7 @@ import { Getter, Mutation } from 'vuex-class';
 import { CartItem } from '@/store/states';
 import TicketCategory from '@/api/tickets';
 import PaypalCheckout from '@/components/PayPalCheckout.vue';
+import AnimatedNumber from '@/components/AnimatedNumber.vue';
 import { EventInfo } from '@/api/product';
 import { Item,
   BtnLayout, ShippingPreference, PreferedPayment, UserAction,
@@ -87,6 +87,7 @@ import moment from 'moment';
 @Component({
   components: {
     PaypalCheckout,
+    AnimatedNumber,
   },
   filters: {
     capitalize: (value: string) => {

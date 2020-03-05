@@ -35,15 +35,17 @@
                 <v-col md='2'><strong>{{p.name|capitalize}}:</strong></v-col>
                 <v-col md='2'>{{p.price|money}}</v-col>
                 <v-col md='4'>
-                  <v-btn class='mb-3' x-small outlined @click='add(p)'>Add To Cart</v-btn>
+                  <v-btn v-if='allincart >= event.avail' class='mb-3' color='red' x-small text>Can't Add More</v-btn>
+                  <v-btn v-else-if='event.avail > 0' class='mb-3' x-small outlined @click='add(p)'>Add To Cart</v-btn>
+                  <v-btn v-else class='mb-3' x-small outlined>Sold Out</v-btn>
                 </v-col>
                 <v-col cols='3'>
-                  <span v-if='incart(p.name)' class='overline indigo--text'>
-                    In Cart: {{ incart(p.name) }}
+                  <span v-if='incart[p.name]' class='overline indigo--text'>
+                    In Cart: {{ incart[p.name] }}
                   </span>
                 </v-col>
                 <v-col cols='1'>
-                  <v-tooltip v-if='incart(p.name)' top>
+                  <v-tooltip v-if='incart[p.name]' top>
                     <template v-slot:activator='{ on }'>
                       <v-btn small class='mt-n1' @click='remove(p)' text icon v-on='on'>
                         <v-icon small>remove_shopping_cart</v-icon>
@@ -122,12 +124,21 @@ export default class EventView extends Vue {
     return ret;
   }
 
-  public incart(type: string): number {
-    if (this.event === null) { return 0; }
+  public get incart(): {[name: string]: number} {
+    if (this.event === null) { return {}; }
     const start = moment(this.event.start, 'YYYY-MM-DD H:mm');
-    const sku = this.event.id.toString() + type.toUpperCase() + String(start.unix());
-    const item = this.items.find((c) => c.sku === sku);
-    return item ? Number(item.quantity) : 0;
+
+    const ret: {[name: string]: number} = {};
+    for (const p of this.prices) {
+      const sku = this.event.id.toString() + p.name.toUpperCase() + String(start.unix());
+      const item = this.items.find((c) => c.sku === sku);
+      ret[p.name] = item ? Number(item.quantity) : 0;
+    }
+    return ret;
+  }
+
+  public get allincart(): number {
+    return Object.values(this.incart).reduce((a, b) => a + b);
   }
 
   public createItem(type: string, price: number): Item {
@@ -144,7 +155,7 @@ export default class EventView extends Vue {
   public remove(p: {name: string, price: number}) {
     if (this.event === null) { return; }
     const item = this.createItem(p.name, p.price);
-    item.quantity = "-1";
+    item.quantity = '-1';
     this.addToCart(item);
   }
 

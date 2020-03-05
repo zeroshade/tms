@@ -845,6 +845,11 @@
     error-stack-parser "^2.0.0"
     string-width "^2.0.0"
 
+"@tweenjs/tween.js@^18.5.0":
+  version "18.5.0"
+  resolved "https://registry.yarnpkg.com/@tweenjs/tween.js/-/tween.js-18.5.0.tgz#f2aa9e6052c6a314d85c9a8034146f9ae6d4e339"
+  integrity sha512-/qyhdvbc6vWsFuiK7Wq74ZMu1F/9sFRlBv2qnjeu70XI0HRC8zOfUqbXT2irVLCSVuCI/fI7HphGdbsbyQ/Q5w==
+
 "@types/auth0-js@^9.10.2":
   version "9.12.4"
   resolved "https://registry.yarnpkg.com/@types/auth0-js/-/auth0-js-9.12.4.tgz#93a622e6382163c54387b5471e9fd89d77529a0e"
@@ -895,6 +900,11 @@
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.2.tgz#690a1475b84f2a884fd07cd797c00f5f31356ea8"
   integrity sha512-ce5d3q03Ex0sy4R14722Rmt6MT07Ua+k4FwDfdcToYJcMKNtRVQvJ6JCAPdAmAnbRb6CsX6aYb9m96NGod9uTw==
+
+"@types/tween.js@^18.5.0":
+  version "18.5.0"
+  resolved "https://registry.yarnpkg.com/@types/tween.js/-/tween.js-18.5.0.tgz#27d10aafa36c75c72953f00936663546b2a28441"
+  integrity sha512-jx8DQOAYj9XOaa0sf0Ixy0bYhx3qFozyDiZnF8Mtfio6Uf9NJt/+RkuYHFmQ4DtHFty+wtVfN08jWJeYAfwcpA==
 
 "@types/webpack-env@^1.15.1":
   version "1.15.1"

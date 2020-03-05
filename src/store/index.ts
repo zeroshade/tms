@@ -29,7 +29,8 @@ export default new Vuex.Store<RootState>({
     auth: AuthModule,
   },
   state: {
-    config: {emailContent: '', passTitle: '', notifyNumber: '', emailFrom: '', emailName: ''},
+    config: {emailContent: '', passTitle: '', notifyNumber: '',
+      emailFrom: '', emailName: '', sendSMS: false},
     reports: [],
   },
   getters: {

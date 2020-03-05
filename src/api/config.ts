@@ -6,6 +6,7 @@ export interface Config {
   emailFrom: string;
   emailName: string;
   emailContent: string;
+  sendSMS: boolean;
 }
 
 export function getConfigReq(): Request {

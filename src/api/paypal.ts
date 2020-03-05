@@ -1,4 +1,3 @@
-
 export interface InitActions {
   enable: () => void;
   disable: () => void;
@@ -140,6 +139,9 @@ export interface OrderDetails {
     email_address: string;
     payer_id: string;
     name: { given_name: string; surname: string; };
+    phone: {
+      phone_number: { national_number: string; };
+    };
   };
   status: string;
   update_time: string;
@@ -179,4 +181,16 @@ export interface Style {
   label?: BtnLabel;
   tagline?: boolean;
   height?: number;
+}
+
+export function confirmOrder(checkoutId: string): Request {
+  return new Request(`${process.env.VUE_APP_BACKEND_HOST}/confirmed`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    mode: 'cors',
+    cache: 'no-cache',
+    body: JSON.stringify({ checkoutId }),
+  });
 }

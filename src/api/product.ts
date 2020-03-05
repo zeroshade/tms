@@ -36,6 +36,7 @@ type Event = PInfo & ScheduleTime;
 export interface EventInfo extends Event {
   start: string;
   end: string;
+  stock: number;
 }
 
 export function getProductsReq(): Request {
