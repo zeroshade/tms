@@ -5,6 +5,7 @@ node_modules
 # local env files
 .env.local
 .env.*.local
+.env.lauralee
 
 # Log files
 npm-debug.log*
@@ -19,3 +20,12 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+# proprietary stuff
+public/css/style.css
+public/img/*.png
+public/img/*.jpg
+public/img/*.gif
+src/assets/*.png
+src/assets/*.jpg
+src/assets/*.gif
