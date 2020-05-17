@@ -88,7 +88,8 @@ export default class EditTickets extends Vue {
   @Getter('product/products') public prods!: Product[];
   @Action('tickets/saveOverride') public saveOverride!: (o: ManualOverride) => Promise<void>;
   @Action('tickets/getOverrides') public getOverrides!: (day: string) => Promise<ManualOverride[]>;
-  @Action('tickets/getSold') public getSold!: (payload: {from: moment.Moment, to: moment.Moment}) => Promise<ScheduleSold[]>;
+  @Action('tickets/getSold') public getSold!: (payload: {from: moment.Moment, to: moment.Moment})
+   => Promise<ScheduleSold[]>;
 
   public date = '';
   public origTrips: TripInfo[] = [];

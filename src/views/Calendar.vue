@@ -370,7 +370,7 @@ export default class Calendar extends Vue {
   }
 
   public getEventName(ei: EventInfo): string {
-    console.log(ei);
+    // console.log(ei);
     return ei.name;
   }
 

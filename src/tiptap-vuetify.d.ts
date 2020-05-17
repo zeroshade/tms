@@ -13,7 +13,7 @@ declare module 'tiptap-vuetify' {
   export const TiptapVuetify: Component;
 
   export class Extension {
-    constructor (...arg: any[])
+    constructor(...arg: any[])
     [key: string]: any;
   }
 

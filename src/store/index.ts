@@ -56,6 +56,7 @@ export default new Vuex.Store<RootState>({
   },
   mutations: {
     logError(state: RootState, obj: any) {
+      // tslint:disable-next-line no-console
       console.log(obj);
     },
     setConfig(state: RootState, conf: Config) {

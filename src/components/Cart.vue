@@ -223,7 +223,7 @@ export default class Cart extends Vue {
   };
 
   public checkinit(data: object, actions: object) {
-    console.log(data, actions);
+    // console.log(data, actions);
   }
 
   public mounted() {
@@ -244,7 +244,7 @@ export default class Cart extends Vue {
     if (this.items.length > 0) {
       this.$gtag.event('begin_checkout', {
         items: this.items.map((i, idx) => ({list_position: idx,  ...itemToGtag(i.item)})),
-        coupon: "",
+        coupon: '',
       });
 
       this.$gtag.event('set_checkout_option', {
@@ -299,7 +299,7 @@ export default class Cart extends Vue {
   public approved(data: ApproveData) {
     this.$gtag.event('checkout_progress', {
       items: this.items.map((i, idx) => ({list_position: idx,  ...itemToGtag(i.item)})),
-      coupon: "",
+      coupon: '',
     });
     this.emptyCart();
     this.sync = false;

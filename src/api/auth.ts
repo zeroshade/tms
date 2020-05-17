@@ -57,6 +57,7 @@ export class Auth {
     try {
       await this.auth0Client!.loginWithPopup(o);
     } catch (e) {
+      // tslint:disable-next-line no-console
       console.error(e);
     } finally {
       this.popupOpen = false;
