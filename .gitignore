@@ -23,9 +23,7 @@ yarn-error.log*
 
 # proprietary stuff
 public/css/style.css
-public/img/*.png
 public/img/*.jpg
 public/img/*.gif
-src/assets/*.png
 src/assets/*.jpg
 src/assets/*.gif
