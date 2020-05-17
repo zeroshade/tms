@@ -7,6 +7,7 @@ import './registerServiceWorker';
 import 'roboto-fontface/css/roboto/roboto-fontface.css';
 import VueMoment from 'vue-moment';
 import { TiptapVuetifyPlugin } from 'tiptap-vuetify';
+import VueMobileDetection from 'vue-mobile-detection';
 import 'tiptap-vuetify/dist/main.css';
 
 
@@ -16,6 +17,7 @@ Vue.use(TiptapVuetifyPlugin, {
   vuetify,
   iconsGroup: 'md',
 });
+Vue.use(VueMobileDetection);
 
 new Vue({
   vuetify,

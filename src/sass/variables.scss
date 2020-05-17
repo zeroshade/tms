@@ -1,0 +1,9 @@
+@import '~vuetify/src/styles/styles.sass';
+
+$calendar-line-width: 1px !default;
+$material-light: (
+  'calendar': (
+    'outside-background-color': #C9E0FF,
+    'line-color': map-get($grey, 'darken-2'),
+  ),
+);

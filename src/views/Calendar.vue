@@ -3,27 +3,33 @@
     <v-container fluid>
       <v-row class='fill-height'>
         <v-col>
-          <v-sheet height='64'>
-            <v-toolbar flat color='white'>
-              <v-btn outlined class='mr-4' color='grey darken-2' @click='setToday'>
+          <calendar-top-bar
+            :title='title'
+            :months='months'
+            :calendar='$refs.calendar'
+            :cur-month='start ? start.month : null'
+            @click:month='setMonth'
+          />
+              <!-- <v-btn outlined class='mr-4' color='grey darken-2' @click='setToday'>
                 Today
+              </v-btn> -->
+              <!-- <v-btn fab text color='grey darken-2' @click='$refs.calendar.prev()'>
+                <v-icon>keyboard_arrow_left</v-icon> Previous
               </v-btn>
-              <v-btn fab text small color='grey darken-2' @click='$refs.calendar.prev()'>
-                <v-icon small>keyboard_arrow_left</v-icon>
-              </v-btn>
-              <v-btn fab text small color='grey darken-2' @click='$refs.calendar.next()'>
-                <v-icon small>keyboard_arrow_right</v-icon>
-              </v-btn>
-              <v-toolbar-title>{{ title }}</v-toolbar-title>
               <v-spacer />
-              <v-badge
+              <v-btn fab text color='grey darken-2' @click='$refs.calendar.next()'>
+                Next <v-icon>keyboard_arrow_right</v-icon>
+              </v-btn> -->
+              <!-- <v-toolbar-title>{{ title }}</v-toolbar-title>
+              <v-spacer /> -->
+              <!-- <v-badge
                 class='mr-7'
                 :content='total'
                 :value='total'
                 >
                 <v-icon @click='showCart = true'>shopping_cart</v-icon>
-              </v-badge>
-              <v-menu bottom right offset-y>
+              </v-badge> -->
+              <!-- <v-menu bottom right offset-y>
                 <template v-slot:activator='{on}'>
                   <v-btn outlined color='grey darken-2' v-on='on'>
                     <span>{{typeToLabel[type]}}</span>
@@ -35,49 +41,84 @@
                     <v-list-item-title>{{label}}</v-list-item-title>
                   </v-list-item>
                 </v-list>
-              </v-menu>
-            </v-toolbar>
-          </v-sheet>
-          <v-sheet :height='calendarHeight'>
+              </v-menu> -->
+            <!-- </v-toolbar> -->
+          <!-- </v-sheet> -->
+          <!-- <v-sheet :height='calendarHeight'> -->
             <v-calendar
               ref='calendar'
               v-model='focus'
               color='primary'
               :now='today'
               :type='type'
+              :event-more='false'
               event-overlap-mode='column'
+              :event-height='40'
               :first-interval='firstInterval'
+              :interval-count='25-firstInterval'
               :events='events'
-              :event-color='getEventColor'
+              event-color=''
+              event-text-color='black'
               :show-interval-label='showIntervalLabel'
               :interval-format='intervalFormat'
               @click:date='viewDay'
               @click:event='showEvent'
               @click:more='viewDay'
-              @change='updateRange' />
+              @change='updateRange'>
+
+              <template v-slot:day-label='{day, month}'>
+                <template v-if='start && start.month !== month'>
+                  <br /> <!-- hide pre and post dates -->
+                </template>
+              </template>
+
+              <template v-slot:event='{event, outside}'>
+                <event v-if='!outside' :event='event' />
+              </template>
+
+              <!-- <template v-slot:event='{ event }'>
+                <span class='d-inline-flex justify-space-between mt-1' style='width: 100%'>
+                <strong class='ml-1'>{{ event.startTime | formatTime }}</strong>
+                <img v-if='event.fish === "striper"' class='mr-1' src='@/assets/striper.png' height='20px' width='30px' />
+                <img v-else-if='event.fish === "seabass"' class='mr-1' src='@/assets/seabass.png' height='20px' width='30px' />
+                <img v-else-if='event.fish === "fluke"' class='mr-1' src='@/assets/fluke.png' height='20px' width='30px' />
+                <span v-else class='ml-auto mr-auto'>{{ event.name }}</span>
+                </span>
+              </template> -->
+            </v-calendar>
             <event-view v-model='selectedOpen'
               :event='selectedEvent'
               :activator='selectedElement'
               @show-cart='showCart = true' />
-          </v-sheet>
+          <!-- </v-sheet> -->
         </v-col>
       </v-row>
     </v-container>
-    <cart :show.sync='showCart' @checkout-success='checkedOut($event)' />
+    <cart :show.sync='showCart' @paypal-approved='finalize = true' @checkout-success='checkedOut($event)' />
+    <v-dialog persistent width='350' v-model='finalize'>
+      <v-card color='primary' dark>
+        <v-card-text>
+          Finalizing Transaction, Please Do Not Close Your Browser
+          <v-progress-linear indeterminate color='white' class='mb-0' />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+    <checked-out v-model='success' :details='order' />
   </v-app>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue, Ref } from 'vue-property-decorator';
 import { Getter, Mutation, Action } from 'vuex-class';
-import Product, { EventInfo } from '@/api/product';
-import EventView from '@/components/EventView.vue';
-import { ScheduleSold } from '@/api/tickets';
+import Product, { EventInfo, Fish } from '@/api/product';
+import { ScheduleSold, ManualOverride } from '@/api/tickets';
 import { OrderDetails } from '@/api/paypal';
-import Cart from '@/components/Cart.vue';
+import { getEvents, getMonths } from '@/api/utils';
+import { itemToGtag } from '@/api/gtag';
 import moment from 'moment';
 import * as momd from 'moment';
 import { extendMoment } from 'moment-range';
+import CalendarTopBar from '@/components/CalendarTopBar.vue';
 
 const { range } = extendMoment(momd);
 
@@ -104,17 +145,21 @@ interface Cal extends Vue {
 }
 
 @Component({
+  filters: {
+    formatTime(t: string): string {
+      const m = moment(t, 'H:mm');
+      return m.minute() > 0 ? m.format('h:m A') : m.format('h A');
+    },
+  },
   components: {
-    Cart,
-    EventView,
+    CalendarTopBar,
+    Event: () => import('@/components/Event.vue'),
+    Cart: () => import('@/components/Cart.vue'),
+    EventView: () => import('@/components/EventView.vue'),
+    CheckedOut: () => import('@/components/CheckedOutDialog.vue'),
   },
 })
 export default class Calendar extends Vue {
-  public static timeToMoment(day: moment.Moment, time: string): moment.Moment {
-    const [h, m] = time.split(':');
-    return day.clone().hour(Number(h)).minute(Number(m)).second(0);
-  }
-
   @Getter('cart/total') public readonly total!: number;
   @Getter('product/products') public prods!: Product[];
   @Mutation('logError') public logErr!: (err: any) => void;
@@ -122,6 +167,9 @@ export default class Calendar extends Vue {
   @Action('tickets/getSold') public getSold!: (payload: {from: moment.Moment, to: moment.Moment})
     => Promise<ScheduleSold[]>;
   @Action('cart/confirmOrder') public confirmOrder!: (checkoutId: string) => Promise<void>;
+  @Action('tickets/getOverrideRange') public getOverrides!: (payload: {from: moment.Moment, to: moment.Moment})
+    => Promise<ManualOverride[]>;
+  @Ref('calendar') public readonly calendar!: Cal;
 
   public readonly calendarHeight = process.env.VUE_APP_CALENDAR_HEIGHT;
   public focus = '';
@@ -129,11 +177,30 @@ export default class Calendar extends Vue {
   public start: CalDate | null = null;
   public end: CalDate | null = null;
   public today = moment().format('YYYY-MM-DD');
-  public events: EventInfo[] = [];
+  public events: EventInfo[] = [{
+    boatId: 1,
+    fish: Fish.Fluke,
+    start: '2019-01-01',
+    end: '2019-01-01',
+    stock: 0,
+    id: 0,
+    name: '',
+    desc: '',
+    color: '',
+    showTickets: false,
+    startTime: '',
+    endTime: '',
+    price: '',
+  }];
   public selectedEvent: EventInfo | null = null;
   public selectedElement: EventTarget | null = null;
   public selectedOpen = false;
   public showCart = false;
+  public finalize = false;
+  public success = false;
+  public order: OrderDetails|null = null;
+
+  public monthList: number[] = [];
 
   public typeToLabel = {
     'month': 'Month',
@@ -142,8 +209,21 @@ export default class Calendar extends Vue {
     '4day': '4 Days',
   };
 
-  public checkedOut(ev: OrderDetails) {
-    this.confirmOrder(ev.id);
+  public async checkedOut(ev: OrderDetails) {
+    this.$gtag.purchase({
+      transaction_id: ev.id,
+      affiliation: 'Pay Pal',
+      value: Number(ev.purchase_units[0].amount.value),
+      items:
+        ev.purchase_units[0].items?.map((i, idx) => ({
+          list_position: idx, ...itemToGtag(i),
+        })),
+      checkout_step: 2,
+    });
+    await this.confirmOrder(ev.id);
+    this.order = ev;
+    this.finalize = false;
+    this.success = true;
   }
 
   public setToday() {
@@ -151,11 +231,29 @@ export default class Calendar extends Vue {
   }
 
   public mounted() {
-    (this.$refs.calendar as Cal).checkChange();
+    this.calendar.checkChange();
+  }
+
+  public setMonth(month: number) {
+    const newDate = moment().month(month - 1);
+    if (moment().isAfter(newDate)) {
+      newDate.add(1, 'year');
+    }
+    this.$gtag.event('view_month', {
+      event_category: 'engagement',
+      event_label: 'Change Month',
+      value: newDate.format('YYYY-MM'),
+    });
+
+    this.focus = newDate.format('YYYY-MM-DD');
+  }
+
+  public get months(): Date[] {
+    return this.monthList.map((m) => { const d = new Date(); d.setMonth(m); return d; });
   }
 
   public get monthFormatter() {
-    return (this.$refs.calendar as Cal).getFormatter({
+    return this.calendar.getFormatter({
       timeZone: 'UTC', month: 'long',
     });
   }
@@ -179,20 +277,39 @@ export default class Calendar extends Vue {
   }
 
   public showEvent(arg: {nativeEvent: Event, event: EventInfo}) {
-    this.getSold({
-      from: moment(arg.event.start, 'YYYY-MM-DD H:mm'),
-      to: moment(arg.event.end, 'YYYY-MM-DD H:mm'),
-    })
+    if (arg.event.cancelled) {
+      arg.nativeEvent.stopPropagation();
+      return;
+    }
+
+    const from = moment(arg.event.start, 'YYYY-MM-DD H:mm');
+    const to = moment(arg.event.end, 'YYYY-MM-DD H:mm');
+
+    Promise.all([
+      this.getSold({from, to}),
+      this.getOverrides({from, to}),
+    ])
     .then((v) => {
-      for (const s of v) {
-        if (moment(arg.event.start, 'YYYY-MM-DD H:mm').unix() === moment(s.stamp).unix() && arg.event.id === s.pid) {
+      const evid = String(arg.event.id) + String(moment(arg.event.start, 'YYYY-MM-DD H:mm').unix());
+      for (const m of v[1]) {
+        const id = String(m.pid) + String(moment(m.time).unix());
+        if (evid === id) {
+          arg.event.cancelled = m.cancelled;
+          arg.event.avail = m.avail;
+          return;
+        }
+      }
+      for (const s of v[0]) {
+        if (evid === String(s.pid) + String(moment(s.stamp).unix())) {
           arg.event.avail = arg.event.stock - s.qty;
-          break;
+          return;
         }
       }
     });
 
     const open = () => {
+      this.$gtag.event('view_item', arg.event);
+
       this.selectedEvent = arg.event;
       this.selectedElement = arg.nativeEvent.target;
       setTimeout(() => this.selectedOpen = true, 10);
@@ -245,16 +362,21 @@ export default class Calendar extends Vue {
 
   public viewDay(arg: CalDate) {
     this.focus = arg.date;
-    this.type = 'day';
+    // this.type = 'day';
   }
 
   public getEventColor(ei: EventInfo): string {
-    return ei.color;
+    return 'white'; // return ei.color;
+  }
+
+  public getEventName(ei: EventInfo): string {
+    console.log(ei);
+    return ei.name;
   }
 
   public async updateRange(arg: {start: CalDate, end: CalDate}) {
     await this.loadProducts();
-    const events: EventInfo[] = [];
+    this.monthList = getMonths(this.prods);
 
     const current = moment().add(1, 'hour');
 
@@ -267,44 +389,10 @@ export default class Calendar extends Vue {
       sold.set(String(s.pid) + String(moment(s.stamp).unix()), s);
     }
 
-    for (const p of this.prods.filter((pr) => pr.publish)) {
-      const timeRange = range(min, max);
-      for (const d of timeRange.by('day')) {
-        for (const sc of p.schedList) {
-          const s = moment(`${d.year()}-${sc.start}`, 'YYYY-MM-DD');
-          const e = moment(`${d.year()}-${sc.end}`, 'YYYY-MM-DD');
-
-          const schedRange = range(s, e);
-          if (!d.within(schedRange) || !sc.selectedDays.includes(d.day())) {
-            continue;
-          }
-
-          if (sc.notAvailArray.find((val) => moment(`${d.year()}-${val}`, 'YYYY-MM-DD').isSame(d, 'day'))) {
-            continue;
-          }
-
-          const stock = sc.ticketsAvail;
-          for (const t of sc.timeArray) {
-            const startMoment = Calendar.timeToMoment(d, t.startTime);
-            const endMoment = Calendar.timeToMoment(d, t.endTime);
-
-            if (!startMoment.isSameOrBefore(current)) {
-              const soldkey = String(p.id) + String(startMoment.unix());
-              let avail = stock;
-              if (sold.has(soldkey)) {
-                avail = stock - sold.get(soldkey)!.qty;
-              }
-              events.push({
-                stock,
-                ...t, avail, ...p,
-                start: startMoment.format('YYYY-MM-DD H:mm'),
-                end: endMoment.format('YYYY-MM-DD H:mm'),
-              });
-            }
-          }
-        }
-      }
-    }
+    const events = getEvents(min, max, this.prods, sold, await this.getOverrides({from: min, to: max})).filter((e) => {
+      const start = moment(e.start, 'YYYY-MM-DD H:mm');
+      return !start.isSameOrBefore(current) && !start.isAfter(max);
+    });
 
     this.start = arg.start;
     this.end = arg.end;
@@ -313,3 +401,19 @@ export default class Calendar extends Vue {
 }
 
 </script>
+
+<style lang="stylus">
+.v-calendar .v-event
+  margin-left 2px
+
+.theme--light
+  &.v-application,
+  &.v-toolbar.v-sheet
+    background #C2E0FF
+
+.v-calendar-weekly
+  height unset
+
+.v-calendar-weekly__week
+  min-height 150px
+</style>

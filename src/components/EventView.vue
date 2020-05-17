@@ -1,28 +1,34 @@
 <template>
-  <v-menu
-    :value='value'
-    @input='$emit("input", $event)'
-    :close-on-content-click='false'
-    :activator='activator'
-    max-width='500px'
-    offset-x>
+  <v-dialog max-width='660px' :value='value' @input='$emit("input", $event)'>
     <v-card v-if='event'
       color='grey lighten-4'
-      min-width='400px'
+      min-width='600px'
       flat>
       <v-toolbar :color='event.color' dark>
         <v-toolbar-title v-html='event.name' />
         <v-spacer />
+        <img v-if='event.fish === "fluke"' src='@/assets/fluke.png' height='50px' :aspect-ratio='1.875' />
+        <img v-else-if='event.fish === "atlanticcod"' src='@/assets/atlanticcod.png' height='40px' :aspect-ratio='2.5' />
+        <img v-else-if='event.fish === "new-striped-bass"' src='@/assets/new-striped-bass.png' height='45px' :aspect-ratio='2.1' />
+        <img v-else-if='event.fish === "seabass"' src='@/assets/seabass.png' height='50px' :aspect-ratio='1.75' />
+        <img v-else-if='event.fish === "seabassfluke"' src='@/assets/seabassfluke.png' height='50px' :aspect-ratio='1.77' />
+        <img v-else-if='event.fish === "striper"' src='@/assets/striper.png' height='50px' :aspect-ratio='2.2' />
+        <v-spacer />
         {{ [event.start, 'YYYY-MM-DD H:mm'] | moment('ddd, MMM Do') }}
       </v-toolbar>
-      <v-card-subtitle class='d-flex justify-space-between'>
+      <v-card-subtitle class='d-flex justify-space-between mt-1 subtitle-1'>
         <span><strong>Start Time: </strong> {{ [event.start, 'YYYY-MM-DD H:mm'] | moment('h:mm A') }}</span>
         <span><strong>End Time: </strong> {{ [event.end, 'YYYY-MM-DD H:mm'] | moment('h:mm A') }}</span>
       </v-card-subtitle>
       <v-card-text>
-        <div class='mb-4' v-if='event.showTickets'>
-          <strong>Tickets Available:</strong> {{event.avail}}
-        </div>
+        <v-row justify='space-between'>
+          <v-col>
+            <strong>Boat:</strong> {{ getBoat(event.boatId).name }}
+          </v-col>
+          <v-col class='text-right'>
+            <strong>Tickets Available:</strong> {{ event.avail }}
+          </v-col>
+        </v-row>
         <span>
           {{ event.desc }}
         </span>
@@ -32,23 +38,31 @@
           <v-container>
             <template v-for='p in prices'>
               <v-row :key='p.name' dense no-gutters>
-                <v-col md='2'><strong>{{p.name|capitalize}}:</strong></v-col>
-                <v-col md='2'>{{p.price|money}}</v-col>
-                <v-col md='4'>
+                <v-col cols='1'><strong>{{p.name|capitalize}}:</strong></v-col>
+                <v-col cols='2'>{{p.price|money}}/ea.</v-col>
+                <v-col cols='4'>
                   <v-btn v-if='allincart >= event.avail' class='mb-3' color='red' x-small text>Can't Add More</v-btn>
-                  <v-btn v-else-if='event.avail > 0' class='mb-3' x-small outlined @click='add(p)'>Add To Cart</v-btn>
+                  <span v-else-if='event.avail > 0' class='mb-3'>
+                    <v-select
+                      v-model='qty[p.name]'
+                      :height='35'
+                      class='d-inline-block mt-n5'
+                      style='width: 70px'
+                      :items='Array(Math.min(event.avail - allincart + 1, 31)).fill().map((_, idx) => String(idx))' />
+                    <v-btn x-small outlined @click='add(p)'>Add To Cart</v-btn>
+                  </span>
                   <v-btn v-else class='mb-3' x-small outlined>Sold Out</v-btn>
                 </v-col>
-                <v-col cols='3'>
-                  <span v-if='incart[p.name]' class='overline indigo--text'>
-                    In Cart: {{ incart[p.name] }}
+                <v-col cols='4'>
+                  <span v-if='incart[p.name]' class='text-uppercase body-2 ml-n2 font-weight-black'>
+                    In Cart: {{ incart[p.name] }} Total: {{ p.price * incart[p.name] | money }}
                   </span>
                 </v-col>
                 <v-col cols='1'>
                   <v-tooltip v-if='incart[p.name]' top>
                     <template v-slot:activator='{ on }'>
-                      <v-btn small class='mt-n1' @click='remove(p)' text icon v-on='on'>
-                        <v-icon small>remove_shopping_cart</v-icon>
+                      <v-btn medium class='mt-n2' @click='remove(p)' text icon v-on='on'>
+                        <v-icon medium>remove_shopping_cart</v-icon>
                       </v-btn>
                     </template>
                     <span>Remove From Cart</span>
@@ -60,28 +74,38 @@
         </div>
       </v-card-text>
       <v-card-actions>
-        <v-btn text color='secondary' @click='$emit("input", false)'>
-          Close
+        <v-btn text color='secondary' @click='close()'>
+          Back to Calendar
         </v-btn>
         <v-spacer />
-        <v-badge class='mr-4'
-          :content='total'
-          :value='total'
-          color='green'>
-          <v-icon @click='$emit("input", false); $emit("show-cart")'>shopping_cart</v-icon>
-        </v-badge>
+        <v-btn text tile link height='59' @click='$emit("input", false); $emit("show-cart")'>
+          Review and Checkout
+          <v-badge class='mr-4 mb-1'
+            overlap
+            tile
+            :value='true'
+            color='#f5f5f5'
+            offset-x='39'
+            offset-y='14'>
+            <template v-slot:badge>
+              <span class='blue-grey--text text--darken-1 title'>{{ total }}</span>
+            </template>
+            <v-icon style='font-family: "Material Icons Outlined"' size='55px'>shopping_cart</v-icon>
+          </v-badge>
+        </v-btn>
       </v-card-actions>
     </v-card>
-  </v-menu>
+  </v-dialog>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Prop } from 'vue-property-decorator';
-import { EventInfo } from '@/api/product';
+import { EventInfo, Boat } from '@/api/product';
 import { Getter, Mutation } from 'vuex-class';
-import TicketCategory from '@/api/tickets';
+import TicketCategory, { CartItem } from '@/api/tickets';
 import moment from 'moment';
 import { Item } from '@/api/paypal';
+import { itemToGtag } from '@/api/gtag';
 
 @Component({
   components: {},
@@ -101,9 +125,16 @@ export default class EventView extends Vue {
   @Prop(Object) public readonly event!: EventInfo | null;
   @Prop() public readonly activator!: EventTarget | null;
   @Getter('tickets/categoryByName') public getPrices!: (name: string) => null | TicketCategory;
-  @Mutation('cart/addCartItem') public addToCart!: (item: Item) => void;
+  @Mutation('cart/addCartItem') public addToCart!: (item: CartItem) => void;
   @Getter('cart/total') public readonly total!: number;
-  @Getter('cart/items') public readonly items!: Item[];
+  @Getter('cart/items') public readonly items!: CartItem[];
+  @Getter('product/boatByID') public getBoat!: (id: number) => Boat;
+
+  public qty: {[name: string]: string} = {
+    adult: '0',
+    child: '0',
+    senior: '0',
+  };
 
   public get prices(): Array<{name: string, price: number}> {
     const ret: Array<{name: string, price: number}> = [];
@@ -131,8 +162,8 @@ export default class EventView extends Vue {
     const ret: {[name: string]: number} = {};
     for (const p of this.prices) {
       const sku = this.event.id.toString() + p.name.toUpperCase() + String(start.unix());
-      const item = this.items.find((c) => c.sku === sku);
-      ret[p.name] = item ? Number(item.quantity) : 0;
+      const item = this.items.find((c) => c.item.sku === sku);
+      ret[p.name] = item ? Number(item.item.quantity) : 0;
     }
     return ret;
   }
@@ -141,12 +172,17 @@ export default class EventView extends Vue {
     return Object.values(this.incart).reduce((a, b) => a + b);
   }
 
+  public needBigger(): boolean {
+    return this.$isMobile() && screen.orientation.type === 'portrait-primary';
+  }
+
   public createItem(type: string, price: number): Item {
     const start = moment(this.event!.start, 'YYYY-MM-DD H:mm');
+    const desc = this.event!.name + ', ' + start.format('M/D/Y, h:mm A');
     return {
       sku: this.event!.id.toString() + type.toUpperCase() + String(start.unix()),
-      name: type[0].toUpperCase() + type.slice(1) + ' Ticket',
-      description: this.event!.name + ', ' + start.format('M/D/Y, h:mm A'),
+      name: type[0].toUpperCase() + type.slice(1) + ' Ticket, ' + this.getBoat(this.event!.boatId).name + ', ' + desc,
+      description: '',
       quantity: '1',
       unit_amount: { value: price.toFixed(2), currency_code: 'USD' },
     };
@@ -156,13 +192,28 @@ export default class EventView extends Vue {
     if (this.event === null) { return; }
     const item = this.createItem(p.name, p.price);
     item.quantity = '-1';
-    this.addToCart(item);
+    this.$gtag.event('remove_from_cart', {items: [ itemToGtag(item) ]});
+    this.addToCart({event: this.event, item});
   }
 
   public add(p: {name: string, price: number}) {
     if (this.event === null) { return; }
     const item = this.createItem(p.name, p.price);
-    this.addToCart(item);
+    item.quantity = this.qty[p.name] || '0';
+
+    this.$gtag.event('add_to_cart', {items: [itemToGtag(item)]});
+
+    this.addToCart({event: this.event, item});
+    this.qty[p.name] = '0';
+  }
+
+  public close() {
+    this.$emit('input', false);
   }
 }
 </script>
+
+<style lang='stylus'>
+.v-btn:before
+  z-index 1
+</style>

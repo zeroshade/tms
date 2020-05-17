@@ -8,6 +8,9 @@
     <v-row>
       <v-col>
         <v-card>
+          <div class='ml-1 pt-2' style='width: 150px'>
+          <date-input label='Date' v-model='date' include-year />
+          </div>
           <v-card-text>
             <tiptap-vuetify class='editor'
               v-model='localReport.content' :extensions='extensions' />
@@ -27,14 +30,17 @@
 import { Component, Vue, Prop } from 'vue-property-decorator';
 import { Action, Getter } from 'vuex-class';
 import { Report } from '@/api/reports';
+import DateInput from '@/components/DateInput.vue';
 import {
   TiptapVuetify, Heading, Bold, Italic, Underline, Image,
   Paragraph, BulletList, OrderedList, ListItem, Link, History,
 } from 'tiptap-vuetify';
+import moment from 'moment';
 
 @Component({
   components: {
     TiptapVuetify,
+    DateInput,
   },
 })
 export default class EditReport extends Vue {
@@ -61,6 +67,7 @@ export default class EditReport extends Vue {
     }],
   ];
 
+  public date = '';
 
   public localReport: Report = {
     content: '',
@@ -73,10 +80,14 @@ export default class EditReport extends Vue {
         await this.loadReports();
       }
       this.localReport = this.reports.find((v) => v.id === this.reportid) || this.localReport;
+      if (this.localReport.createdAt) {
+        this.date = moment(this.localReport.createdAt).format('YYYY-MM-DD');
+      }
     }
   }
 
   public async save() {
+    this.localReport.createdAt = moment(this.date).toDate();
     await this.saveReport(this.localReport);
     this.$router.push({name: 'reporthome'});
   }

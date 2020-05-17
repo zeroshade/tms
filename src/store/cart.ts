@@ -1,20 +1,22 @@
 import { Module } from 'vuex';
 import { EventInfo } from '@/api/product';
 import { ShoppingCartState, RootState } from './states';
-import { Item, confirmOrder } from '@/api/paypal';
+import { Item, confirmOrder, resendEmail, sendText } from '@/api/paypal';
+import { CartItem } from '@/api/tickets';
 import moment from 'moment';
 
 const cartModule: Module<ShoppingCartState, RootState> = {
   namespaced: true,
   state: {
-    items: JSON.parse(localStorage.getItem('cart') || '[]'),
+    // items: JSON.parse(localStorage.getItem('cart') || '[]'),
+    items: [],
   },
   getters: {
     items(state) {
       return state.items;
     },
     total(state): number {
-      return state.items.reduce((acc, cur) => Number(cur.quantity) + acc, 0);
+      return state.items.reduce((acc, cur) => Number(cur.item.quantity) + acc, 0);
     },
   },
   mutations: {
@@ -24,35 +26,35 @@ const cartModule: Module<ShoppingCartState, RootState> = {
     },
     cleanCart(state: ShoppingCartState) {
       state.items = state.items.filter((ci) => {
-        return Number(ci.quantity) > 0;
+        return Number(ci.item.quantity) > 0;
       });
       localStorage.setItem('cart', JSON.stringify(state.items));
     },
-    addCartItem(state: ShoppingCartState, payload: Item) {
-      const idx = state.items.findIndex((c) => c.sku === payload.sku);
+    addCartItem(state: ShoppingCartState, payload: CartItem) {
+      const idx = state.items.findIndex((c) => c.item.sku === payload.item.sku);
       if (idx === -1) {
         state.items.push(payload);
       } else {
-        const curquant = Number(state.items[idx].quantity);
-        payload.quantity = (Number(payload.quantity) + curquant).toString();
+        const curquant = Number(state.items[idx].item.quantity);
+        payload.item.quantity = (Number(payload.item.quantity) + curquant).toString();
         state.items.splice(idx, 1, payload);
       }
     },
-    updateCartItem(state: ShoppingCartState, ci: Item) {
-      const idx = state.items.findIndex((c) => ci.sku === c.sku);
+    updateCartItem(state: ShoppingCartState, ci: CartItem) {
+      const idx = state.items.findIndex((c) => ci.item.sku === c.item.sku);
       if (idx !== -1) {
         state.items.splice(idx, 1, ci);
         localStorage.setItem('cart', JSON.stringify(state.items));
       }
     },
-    updateFullCart(state: ShoppingCartState, items: Item[]) {
+    updateFullCart(state: ShoppingCartState, items: CartItem[]) {
       state.items = items.filter((ci) => {
-        return Number(ci.quantity) > 0;
+        return Number(ci.item.quantity) > 0;
       });
       localStorage.setItem('cart', JSON.stringify(state.items));
     },
     removeFromCart(state: ShoppingCartState, sku: string) {
-      const idx = state.items.findIndex((ci) => ci.sku === sku);
+      const idx = state.items.findIndex((ci) => ci.item.sku === sku);
       if (idx !== -1) {
         state.items.splice(idx, 1);
         localStorage.setItem('cart', JSON.stringify(state.items));
@@ -62,6 +64,12 @@ const cartModule: Module<ShoppingCartState, RootState> = {
   actions: {
     async confirmOrder({}, checkoutId: string) {
       await fetch(confirmOrder(checkoutId));
+    },
+    async resendEmail({}, payload: {checkoutId: string, email: string}) {
+      await fetch(resendEmail(payload.checkoutId, payload.email));
+    },
+    async sendText({}, payload: {checkoutId: string, phone: string}) {
+      await fetch(sendText(payload.checkoutId, payload.phone));
     },
     addCartItem({commit, rootGetters}, payload: { ei: EventInfo, date: string }) {
       const d = moment(payload.date + ' ' + payload.ei.startTime, 'YYYY-MM-DD HH:mm');
@@ -73,8 +81,8 @@ const cartModule: Module<ShoppingCartState, RootState> = {
         if (Number(priceCat.categories[key]) > 0) {
           commit('addCartItem', {
             sku: payload.ei.id.toString() + key.toUpperCase() + String(d.unix()),
-            name: key[0].toUpperCase() + key.slice(1) + ' Ticket',
-            description: prod,
+            name: key[0].toUpperCase() + key.slice(1) + ' Ticket | ' + prod,
+            description: '',
             quantity: '0',
             unit_amount: { value: Number(priceCat.categories[key]).toFixed(2), currency_code: 'USD' },
           });

@@ -9,35 +9,33 @@
       <v-col cols="12">
         <v-card class='elevation-1'>
           <v-card-title>
-            <v-spacer />
             <date-input :include-year='true' label='Date' v-model='date' />
+            <v-spacer />
+            <v-select label='Trip Time' v-model='triptime' :items='tripOpts' item-text='display' item-value='timestamp' />
           </v-card-title>
           <v-card-text>
-            <v-data-table class='elevation-1' :loading='loading'
-              show-expand
-              single-expand
-              :expanded.sync='expanded'
+            <v-data-table class='elevation-3' :loading='loading'
+              disable-pagination
+              hide-default-footer
               :headers='headers'
               :items='items'
               item-key='key'
               loading-text='Loading Orders... Please Wait'
-              :no-data-text='`No Orders found for trips on ${date}`'>
+              :no-data-text='`No Orders found for Trip: ${tripday.format("YYYY-MM-DD h:mm A")}`'>
+              <template v-slot:group.header='{ group }'>
+                <span class='ml-2'>Purchased by {{ payers[group].name }} (<a :href='`mailto:${payers[group].email}`'>{{payers[group].email}}</a>)</span>
+              </template>
+              <template v-slot:item.email='{ item }'>
+                <a :href='`mailto:${payers[item.payerId].email}`'>{{ payers[item.payerId].email }}</a>
+              </template>
               <template v-slot:item.title='{ item }'>
-                <strong>{{ item.name }}, {{ item.description }}</strong>
+                <strong>{{ item.name }}{{ item.desc ? `, ${item.desc}` : '' }}</strong>
               </template>
-              <template v-slot:item.quantity='{ value }'>
+              <template v-slot:item.qty='{ value }'>
                 {{ value }}
               </template>
-              <template v-slot:item.cost='{ item }'>
-                {{ item.unit_amount.value }}
-              </template>
-              <template v-slot:item.coid='{ value }'>
+              <template v-slot:item.value='{ value }'>
                 {{ value }}
-              </template>
-              <template v-slot:expanded-item='{ headers, item }'>
-                <td :colspan='headers.length'>
-                  <order-detail :order='getOrderDetails(item.coid)' />
-                </td>
               </template>
             </v-data-table>
           </v-card-text>
@@ -49,32 +47,54 @@
 
 <script lang='ts'>
 import { Component, Vue, Watch } from 'vue-property-decorator';
-import { Action } from 'vuex-class';
-import { OrderedItem, OrderResponse } from '@/store';
+import { Action, Getter } from 'vuex-class';
+import { OrderedItem, OrderResponse, Orders } from '@/store';
 import { OrderDetails } from '@/api/paypal';
+import { OrdersReq } from '@/api/tickets';
+import Product from '@/api/product';
+import { getEvents } from '@/api/utils';
 import DateInput from '@/components/DateInput.vue';
 import OrderDetail from '@/components/OrderDetail.vue';
 import moment from 'moment';
 
-interface TableItem extends OrderedItem {
+interface TableItem extends Orders {
   key: string;
 }
 
+interface DataTableOptions {
+  page: number;
+  itemsPerPage: number;
+  sortBy: string[];
+  sortDesc: boolean[];
+  groupBy?: string[];
+  groupDesc?: boolean[];
+  multiSort?: boolean;
+  mustSort?: boolean;
+}
+
 @Component({
+  filters: {
+    orderedby: (details: OrderDetails) => {
+      return `${details.payer.name.given_name} ${details.payer.name.surname} <a href="mailto:${details.payer.email_address}">${details.payer.email_address}</a>`;
+    },
+  },
   components: {
     DateInput,
     OrderDetail,
   },
 })
 export default class ViewOrders extends Vue {
-  @Action('getOrders') public getOrders!: (date: string) => Promise<OrderResponse>;
+  @Action('getOrders') public getOrders!: (date: string) => Promise<Orders[]>;
+  @Action('loadOrders') public loadOrders!: (req: OrdersReq) => Promise<OrderResponse>;
+  @Getter('product/products') public prods!: Product[];
 
   public headers = [
     { text: 'Ticket', value: 'title' },
-    { text: 'Quantity', value: 'quantity' },
-    { text: 'Price per Ticket', value: 'cost' },
-    { text: 'Order Id', value: 'coid' },
-    { text: '', value: 'data-table-expand' },
+    { text: 'Quantity', value: 'qty', width: 100 },
+    { text: 'Purchaser', value: 'payer' },
+    // { text: 'Price per Ticket', value: 'value' },
+    { text: 'Email', value: 'email' },
+    { text: 'Status', value: 'status' },
   ];
 
   public expanded = [];
@@ -82,6 +102,16 @@ export default class ViewOrders extends Vue {
   public items: TableItem[] = [];
   public orders: OrderDetails[] = [];
   public loading = false;
+  public total = 0;
+  public external: TableItem[] = [];
+  public triptime = '';
+
+  public options: DataTableOptions = {
+    page: 1,
+    itemsPerPage: 10,
+    sortBy: [],
+    sortDesc: [],
+  };
 
   public mounted() {
     this.date = moment().format('YYYY-MM-DD');
@@ -91,14 +121,45 @@ export default class ViewOrders extends Vue {
     return this.orders.find((v) => v.id === coid);
   }
 
-  @Watch('date')
+  public get tripday(): moment.Moment {
+    return moment.unix(Number(this.triptime));
+  }
+
+  public get payers(): {[payer: string]: {name: string, email: string}} {
+    const ret: {[payer: string]: {name: string, email: string}} = {};
+    for (const i of this.items) {
+      ret[i.payerId] = {name: i.payer, email: i.email};
+    }
+    return ret;
+  }
+
+  public get tripOpts(): Array<{timestamp: string, display: string}> {
+    if (!this.date) { return []; }
+    const events = getEvents(moment(`${this.date}T00:00:00`), moment(`${this.date}T23:59:59`), this.prods, null, null);
+    const results = events.map((e) => {
+      const start = moment(e.start, 'YYYY-MM-DD H:mm');
+      return {display: start.format('h:mm A'), timestamp: String(start.unix())};
+    }).sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
+    if (results.length) {
+      this.triptime = results[0].timestamp;
+    }
+    return results;
+  }
+
+  @Watch('triptime')
   public async onDateChange(newval: string) {
     this.loading = true;
+    if (!newval) { return; }
+
     const resp = await this.getOrders(newval);
 
     this.loading = false;
-    this.items = resp.items.map((o) => ({key: o.coid + o.sku, ...o}));
-    this.orders = resp.orders || [];
+    this.items = resp.map((o) => ({key: o.coid + o.sku, ...o}));
   }
 }
 </script>
+
+<style lang="stylus" scoped>
+@page
+  size A4 landscape
+</style>

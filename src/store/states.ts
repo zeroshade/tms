@@ -1,8 +1,7 @@
-import Product, { EventInfo } from '@/api/product';
-import TicketCategory from '@/api/tickets';
+import Product, { Boat } from '@/api/product';
+import TicketCategory, { CartItem } from '@/api/tickets';
 import { Auth } from '@/api/auth';
 import { User } from '@/api/users';
-import { Item } from '@/api/paypal';
 import { Config } from '@/api/config';
 import { Report } from '@/api/reports';
 
@@ -13,23 +12,24 @@ export interface RootState {
 
 export interface ProductState {
   productList: Product[];
+  boatList: Boat[];
 }
 
 export interface TicketState {
   categoryList: TicketCategory[];
 }
 
-export interface CartItem {
-  id: string;
-  ei: EventInfo;
-  date: Date;
-  categories: {
-    [category: string]: number;
-  };
-}
+// export interface CartItem {
+//   id: string;
+//   ei: EventInfo;
+//   date: Date;
+//   categories: {
+//     [category: string]: number;
+//   };
+// }
 
 export interface ShoppingCartState {
-  items: Item[];
+  items: CartItem[];
 }
 
 export interface AuthState {

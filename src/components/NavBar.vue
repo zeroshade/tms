@@ -1,5 +1,9 @@
 <template>
-  <v-navigation-drawer permanent app>
+  <v-navigation-drawer
+    v-model='sync'
+    mobile-break-point='600'
+    app
+    class='d-print-none'>
     <v-toolbar flat>
       <v-list>
         <v-list-item>
@@ -58,6 +62,9 @@
         <v-list-item :to="{name: 'ticketprice'}">
           <v-list-item-title>Edit Price Categories</v-list-item-title>
         </v-list-item>
+        <v-list-item :to="{name: 'edittickets'}">
+          <v-list-item-title>Edit Tickets Available</v-list-item-title>
+        </v-list-item>
       </v-list-group>
 
       <v-list-group no-action prepend-icon="assignment" value="true">
@@ -87,10 +94,11 @@
 </template>
 
 <script lang='ts'>
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop, PropSync } from 'vue-property-decorator';
 
 @Component
 export default class NavBar extends Vue {
+  @PropSync('show', { type: Boolean }) public sync!: boolean;
   @Prop(Function) public logout!: (o?: any) => void;
 }
 </script>

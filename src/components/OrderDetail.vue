@@ -1,14 +1,16 @@
 <template>
-  <v-card class='mx-auto' tile>
+  <!-- <v-card class='mx-auto' tile>
     <div class='d-flex mt-1'>
       <div class='pa-2'>
-        <strong>Order By:</strong>
+        <strong>Order By:</strong> -->
+  <span>
         {{ order.payer.name.given_name }} {{ order.payer.name.surname }}
         (<a :href='`mailto:${order.payer.email_address }`'>{{ order.payer.email_address}}</a>)
-      </div>
+  </span>
+      <!-- </div>
       <div class='pa-2'><strong>Placed On:</strong> {{ order.create_time | moment('M/D/YY, h:mm A') }}</div>
     </div>
-  </v-card>
+  </v-card> -->
 </template>
 
 <script lang="ts">

@@ -1,5 +1,16 @@
 <template>
   <v-container fluid>
+    <v-dialog v-model='confirm' persistent max-width='300'>
+      <v-card>
+        <v-card-title class='headline'>Confirm Delete</v-card-title>
+        <v-card-text>Are you sure you want to delete this?</v-card-text>
+        <v-card-actions>
+          <v-btn color='green' text @click='del'>Yes</v-btn>
+          <v-spacer />
+          <v-btn color='red' text @click='delReport = null; confirm = false'>No</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-row>
       <v-col><div class='headline mb-3'>Reports</div></v-col>
     </v-row>
@@ -14,8 +25,8 @@
             <div style='max-width: 750px; min-height: 50px'  v-html='value' class='content-row'></div>
           </template>
           <template v-slot:item.actions='{ item }'>
-            <v-btn icon :to='{ name: "editreport", params: { id: item.id } }'><v-icon>edit</v-icon></v-btn>
-            <v-btn icon @click='deleteReport(item.id)'><v-icon>delete</v-icon></v-btn>
+            <v-btn class='mr-3' icon :to='{ name: "editreport", params: { id: item.id } }'><v-icon>edit</v-icon></v-btn>
+            <v-btn class='ml-3' icon @click='delReport = item.id; confirm = true'><v-icon>delete</v-icon></v-btn>
           </template>
           <template v-slot:body.append>
             <tr>
@@ -48,6 +59,8 @@ export default class ViewReports extends Vue {
   ];
 
   public loading = false;
+  public delReport: number | null = null;
+  public confirm: boolean = false;
 
   public async created() {
     if (this.reports.length === 0) {
@@ -55,6 +68,14 @@ export default class ViewReports extends Vue {
       await this.loadReports();
       this.loading = false;
     }
+  }
+
+  public async del() {
+    if (this.delReport === null) { return; }
+
+    await this.deleteReport(this.delReport);
+    this.confirm = false;
+    this.delReport = null;
   }
 }
 </script>

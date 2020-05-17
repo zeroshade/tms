@@ -109,5 +109,11 @@ export default new Router({
       beforeEnter: authGuard,
       component: () => import('@/views/reports/EditReport.vue'),
     },
+    {
+      path: '/admin/tickets/edit',
+      name: 'edittickets',
+      beforeEnter: authGuard,
+      component: () => import('@/views/tickets/EditTickets.vue'),
+    },
   ],
 });

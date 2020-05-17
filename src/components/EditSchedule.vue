@@ -43,12 +43,12 @@
           <v-col v-if='sched.timeArray.length'>
             <time-input v-model='sched.timeArray[idx].startTime' required
              field-cls='mr-0 pb-1 mt-0 pt-0' label='Start Time'
-             :max='sched.timeArray[idx].endTime' />
+              />
           </v-col>
           <v-col v-if='sched.timeArray.length'>
             <time-input v-model='sched.timeArray[idx].endTime' required
               field-cls='ml-1 pb-1 mt-0 pt-0' label='End Time'
-              :min='sched.timeArray[idx].startTime' />
+               />
           </v-col>
           <v-col v-if='sched.timeArray.length'>
             <v-select label='Price Set' class='ml-1 pl-2 mt-0 pb-1'

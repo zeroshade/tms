@@ -15,22 +15,42 @@
           <v-stepper-content step='1'>
             <v-card class='mx-auto'>
               <v-row>
-                <v-col cols="12" md="5">
+                <v-col cols="12" md="3">
                   <v-text-field
                     label='Name'
                     v-model='name'
                     :rules='[required]'
                     required />
                 </v-col>
-                <v-col cols="4" offset-md="1" md="2">
+                <v-col md="2">
+                  <v-select label='Boat'
+                    :items='boats'
+                    item-text='name'
+                    item-value='id'
+                    v-model='boatId' />
+                </v-col>
+                <v-col cols="4" md="2">
                   <v-select label='Color'
                     :items='["blue", "red"]'
                     v-model='color' />
                 </v-col>
-                <v-col cols="5" offset-md="1" md="2">
+              </v-row>
+              <v-row>
+                <v-col md="3">
+                  <v-select label='Fish'
+                    v-model='fish'
+                    :items='fishOpts'
+                    />
+                </v-col>
+                <v-col cols="5"  md="2">
                   <v-switch
                     v-model='publish'
                     label='Publish' />
+                </v-col>
+                <v-col cols="5" md="3">
+                  <v-switch
+                    v-model='showTickets'
+                    label='Show Tickets Left' />
                 </v-col>
                 <v-col md="9">
                   <v-textarea
@@ -39,45 +59,39 @@
                     v-model='desc'
                     required />
                 </v-col>
-                <v-col cols="5" md="3">
-                  <v-switch
-                    v-model='showTickets'
-                    label='Show Tickets Left' />
-                </v-col>
               </v-row>
               <v-card-actions>
-          <v-btn color='primary' @click='stepper = 2'>
-            Continue
-          </v-btn>
-          <v-btn color='success' @click='save()'>
-            Save
-          </v-btn>
+                <v-btn color='primary' @click='stepper = 2'>
+                  Continue
+                </v-btn>
+                <v-btn color='success' @click='save()'>
+                  Save
+                </v-btn>
               </v-card-actions>
             </v-card>
-
-        </v-stepper-content>
-        <v-stepper-content step='2'>
-          <v-card class='mx-auto' min-height='500px'>
-            <v-row>
-              <v-col offset="8" md="4">
-                  <v-btn @click='addSched()' style='float: right' color='success'>Add New Schedule</v-btn>
-              </v-col>
-            </v-row>
-            <v-container fluid>
-              <v-card shaped class='mx-auto mb-4' v-for='(item, idx) in schedList' :key='`edit-${idx}`'>
-                <v-card-title>
-                  Schedule {{ idx + 1 }}
-                  <v-spacer />
-                  <v-btn small dark fab right color='red' @click='schedList.splice(idx, 1)'>
-                    <v-icon dark>close</v-icon>
-                  </v-btn>
-                </v-card-title>
-                <v-divider />
-                <v-card-text>
-                  <edit-schedule ref='edit' :sched='schedList[idx]' />
-                </v-card-text>
-              </v-card>
-            </v-container>
+          </v-stepper-content>
+          <v-stepper-content step='2'>
+            <v-card class='mx-auto' min-height='500px'>
+              <v-row>
+                <v-col offset="8" md="4">
+                    <v-btn @click='addSched()' style='float: right' color='success'>Add New Schedule</v-btn>
+                </v-col>
+              </v-row>
+              <v-container fluid>
+                <v-card shaped class='mx-auto mb-4' v-for='(item, idx) in schedList' :key='`edit-${idx}`'>
+                  <v-card-title>
+                    Schedule {{ idx + 1 }}
+                    <v-spacer />
+                    <v-btn small dark fab right color='red' @click='schedList.splice(idx, 1)'>
+                      <v-icon dark>close</v-icon>
+                    </v-btn>
+                  </v-card-title>
+                  <v-divider />
+                  <v-card-text>
+                    <edit-schedule ref='edit' :sched='schedList[idx]' />
+                  </v-card-text>
+                </v-card>
+              </v-container>
               <v-card-actions>
                 <v-btn color='secondary' @click='stepper = 1'>
                   Back
@@ -96,10 +110,10 @@
 
 <script lang='ts'>
 import { Component, Vue, Prop, Watch } from 'vue-property-decorator';
-import { Schedule } from '@/api/product';
+import { Schedule, Fish } from '@/api/product';
 import EditSchedule from '@/components/EditSchedule.vue';
 import { Action, Getter } from 'vuex-class';
-import Product from '@/api/product';
+import Product, { Boat } from '@/api/product';
 
 function fixDate(year: number, day: string): string {
   if (day.length <= 5) {
@@ -117,6 +131,7 @@ export default class ProductForm extends Vue {
   @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Action('product/saveProduct') public saveProduct!: (prod: Product) => Promise<void>;
   @Getter('product/products') public prods!: Product[];
+  @Getter('product/boats') public boats!: Boat[];
   @Prop({ default: -1}) public id!: number;
 
   public stepper = 1;
@@ -124,12 +139,24 @@ export default class ProductForm extends Vue {
   public name = '';
   public desc = '';
   public color = '';
+  public boatId = 1;
   public publish = false;
   public showTickets = false;
   public valid = true;
   public schedList: Schedule[] = [];
+  public fish: Fish = Fish.Fluke;
 
   public readonly required = (v: string) => !!v || 'Required Field';
+  public get fishOpts(): Array<{text: string, value: string}> {
+    const ret = [];
+
+    const fishkeys = Object.keys(Fish);
+    const fishvals = Object.values(Fish);
+    for (let i = 0; i < fishkeys.length; ++i) {
+      ret.push({text: fishkeys[i], value: fishvals[i]});
+    }
+    return ret;
+  }
 
   @Watch('prods')
   public onProds() {
@@ -140,7 +167,7 @@ export default class ProductForm extends Vue {
   }
 
   public async created() {
-    await this.loadProducts();
+    // await this.loadProducts();
   }
 
   public mounted() {
@@ -159,8 +186,8 @@ export default class ProductForm extends Vue {
 
   public async save() {
     if ((this.$refs.form as HTMLFormElement).validate() && this.validateSchedList()) {
-      const {id, name, desc, publish, color, showTickets, schedList} = this;
-      this.saveProduct({id, name, desc, color, publish, showTickets, schedList});
+      const {id, name, desc, publish, color, showTickets, schedList, fish, boatId} = this;
+      this.saveProduct({id, name, desc, color, publish, showTickets, schedList, fish, boatId});
       this.$router.push({name: 'home'});
     }
   }
@@ -185,6 +212,8 @@ export default class ProductForm extends Vue {
     this.color = p.color;
     this.showTickets = p.showTickets;
     this.schedList = [];
+    this.fish = p.fish;
+    this.boatId = p.boatId;
     const y = new Date().getFullYear();
     for (const s of p.schedList) {
       const newsched = {...s};

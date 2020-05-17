@@ -2,7 +2,8 @@ import { Module } from 'vuex';
 import { RootState, TicketState } from './states';
 import TicketCategory, {
   CheckoutInfo, getPurchaseItemsReq, deleteCategoryReq, getCategoriesReq,
-  saveCategories, ScheduleSold, getCurrSold, getCheckoutIdsReq,
+  saveCategories, ScheduleSold, getCurrSold, getCheckoutIdsReq, saveOverride,
+  ManualOverride, getOverrides, getOverrideRange,
 } from '@/api/tickets';
 import { Item } from '@/api/paypal';
 import moment from 'moment';
@@ -61,8 +62,8 @@ const ticketModule: Module<TicketState, RootState> = {
       await dispatch('loadCategories');
       return state.categoryList;
     },
-    async deleteCategory({commit}, id: number) {
-      await this.dispatch('auth/makeAuthReq', deleteCategoryReq(id), { root: true });
+    async deleteCategory({commit, dispatch}, id: number) {
+      await dispatch('auth/makeAuthReq', deleteCategoryReq(id), { root: true });
       commit('removeCategory', id);
     },
     async getSold({}, payload: {from: moment.Moment, to: moment.Moment}): Promise<ScheduleSold[]> {
@@ -79,6 +80,16 @@ const ticketModule: Module<TicketState, RootState> = {
     async getPurchases({}, checkoutId: string): Promise<{items: Item[], name: string, email: string, payer: string}> {
       const resp = await fetch(getPurchaseItemsReq(checkoutId));
       return await resp.json();
+    },
+    async saveOverride({dispatch}, override: ManualOverride): Promise<void> {
+      await dispatch('auth/makeAuthReq', saveOverride(override), { root: true });
+    },
+    async getOverrides({dispatch}, day: string): Promise<ManualOverride[]> {
+      const resp = await dispatch('auth/makeAuthReq', getOverrides(day), { root: true });
+      return await resp.json();
+    },
+    async getOverrideRange({}, payload: {from: moment.Moment, to: moment.Moment}): Promise<ManualOverride[]> {
+      return await getOverrideRange(payload.from, payload.to);
     },
   },
 };

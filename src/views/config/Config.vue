@@ -44,6 +44,12 @@
                   <tiptap-vuetify v-model='localConf.emailContent' :extensions='extensions' />
                 </v-col>
               </v-row>
+              <v-row>
+                <v-col md='10'>
+                  <p>The Terms and Conditions For purchasing</p>
+                  <tiptap-vuetify v-model='localConf.terms' :extensions='extensions' />
+                </v-col>
+              </v-row>
             </v-container>
           </v-card-text>
           <v-card-actions>
@@ -78,7 +84,7 @@ export default class ConfigView extends Vue {
 
   public localConf: Config = {
     emailContent: '', passTitle: '', notifyNumber: '',
-    emailFrom: '', emailName: '', sendSMS: false};
+    emailFrom: '', emailName: '', sendSMS: false, terms: ''};
 
   public extensions = [
     History,

@@ -9,7 +9,7 @@
     min-width="230px"
     max-width="230px"
     @input='selected = value'
-    @update:return-value='$emit("input", $event)'>
+    @update:return-value='(ev) => { if (ev) { $emit("input", ev); } }'>
     <template v-slot:activator="{ on }">
       <v-text-field
         :class='fieldCls'

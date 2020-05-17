@@ -4,7 +4,7 @@ import { RootState } from './states';
 import TicketModule from './tickets';
 import CartModule from './cart';
 import ProductModule from './products';
-import { getOrdersReq } from '@/api/tickets';
+import { getOrdersReq, loadOrders, OrdersReq } from '@/api/tickets';
 import { OrderDetails, Item } from '@/api/paypal';
 import { Report, getReportsReq, saveReportReq, deleteReportsReq } from '@/api/reports';
 import { Config, getConfigReq, updateConfigReq } from '@/api/config';
@@ -19,6 +19,19 @@ export interface OrderedItem extends Item {
 export interface OrderResponse {
   items: OrderedItem[];
   orders: OrderDetails[];
+  total?: number;
+}
+
+export interface Orders {
+  name: string;
+  desc: string;
+  payer: string;
+  email: string;
+  qty: number;
+  coid: string;
+  sku: string;
+  payerId: string;
+  status: string;
 }
 
 export default new Vuex.Store<RootState>({
@@ -30,7 +43,7 @@ export default new Vuex.Store<RootState>({
   },
   state: {
     config: {emailContent: '', passTitle: '', notifyNumber: '',
-      emailFrom: '', emailName: '', sendSMS: false},
+      emailFrom: '', emailName: '', sendSMS: false, terms: ''},
     reports: [],
   },
   getters: {
@@ -61,8 +74,12 @@ export default new Vuex.Store<RootState>({
     },
   },
   actions: {
-    async getOrders({dispatch}, date: string): Promise<OrderResponse> {
+    async getOrders({dispatch}, date: string): Promise<Orders[]> {
       const resp = await dispatch('auth/makeAuthReq', getOrdersReq(date));
+      return await resp.json();
+    },
+    async loadOrders({dispatch}, req: OrdersReq): Promise<OrderResponse> {
+      const resp = await dispatch('auth/makeAuthReq', loadOrders(req));
       return await resp.json();
     },
     async loadConfig({commit}): Promise<void> {

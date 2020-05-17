@@ -21,13 +21,13 @@ const authModule: Module<AuthState, RootState> = {
       return state.auth.error;
     },
     loading(state: AuthState): boolean {
-      return state.loading;
+      return auth.loading;
     },
     authenticated(state: AuthState): boolean {
-      return state.authenticated;
+      return auth.isAuthenticated;
     },
     user(state: AuthState): object {
-      return state.auth.user;
+      return auth.user;
     },
     users(state: AuthState): User[] {
       return state.userList;
@@ -36,7 +36,7 @@ const authModule: Module<AuthState, RootState> = {
   mutations: {
     setInit(state: AuthState) {
       state.loading = false;
-      state.authenticated = state.auth.isAuthenticated;
+      state.authenticated = auth.isAuthenticated;
     },
     setAuth(state: AuthState, isauth: boolean) {
       state.authenticated = isauth;
@@ -49,6 +49,9 @@ const authModule: Module<AuthState, RootState> = {
     async initAuth({state, commit}, redir?: (appState: RedirectLoginResult) => void) {
       await state.auth.initialize(redir);
       commit('setInit');
+    },
+    async getUser() {
+      return await auth.getUser();
     },
     async loginWithPopup({state, commit}, o: any) {
       await state.auth.loginWithPopup(o);

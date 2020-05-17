@@ -24,8 +24,8 @@ export class Auth {
     this.auth0Client = await createAuth0Client({
       domain: process.env.VUE_APP_AUTH0_DOMAIN || '',
       client_id: process.env.VUE_APP_AUTH0_CLIENT_ID || '',
-      redirect_uri: window.location.origin + '/admin/',
-      audience: 'https://tmszero.auth0.com/api/v2/',
+      redirect_uri: window.location.origin + process.env.BASE_URL + 'admin/',
+      audience: `https://${process.env.VUE_APP_AUTH0_DOMAIN}/api/v2/`,
     });
 
     try {
@@ -46,6 +46,10 @@ export class Auth {
       this.user = await this.auth0Client.getUser();
       this.loading = false;
     }
+  }
+
+  public async getUser(): Promise<{[claim: string]: string | string[]}> {
+    return await this.auth0Client?.getUser();
   }
 
   public async loginWithPopup(o: any) {

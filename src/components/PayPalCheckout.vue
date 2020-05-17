@@ -54,13 +54,18 @@ export default class PaypalCheckout extends Vue {
 
   public readonly intent = OrderIntent.CAPTURE;
 
-  public async mounted() {
-    await this.$loadScript(`https://www.paypal.com/sdk/js?client-id=${process.env.VUE_APP_PAYPAL_ID}&currency=USD&disable-funding=credit&merchant-id=${process.env.VUE_APP_MERCHANT_ID}`);
-    paypal.Buttons({
+  public btnref: any = null;
+
+  public createButton() {
+    this.btnref = paypal.Buttons({
+      enableStandardCardFields: true,
       createOrder: (data: object, actions: CreateActions): Promise<object> => {
         return actions.order.create({
           intent: this.intent,
           application_context: this.context,
+          payer: {
+
+          },
           purchase_units: [
             {
               payee: this.payee,
@@ -90,6 +95,17 @@ export default class PaypalCheckout extends Vue {
       onClick: this.onClick,
       style: this.btnStyle,
     }).render('#paypal-button-container');
+  }
+
+  public async mounted() {
+    await this.$loadScript(`https://www.paypal.com/sdk/js?integration-date=2020-05-01&client-id=${process.env.VUE_APP_PAYPAL_ID}&currency=USD&disable-funding=credit&merchant-id=${this.merchantId}`);
+    this.createButton();
+  }
+
+  private get merchantId(): string {
+    return process.env.VUE_APP_PAYPAL_ENV === 'LIVE'
+      ? process.env.VUE_APP_MERCHANT_ID || ''
+      : process.env.VUE_APP_SANDBOX_ID || '';
   }
 }
 </script>

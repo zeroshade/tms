@@ -194,3 +194,27 @@ export function confirmOrder(checkoutId: string): Request {
     body: JSON.stringify({ checkoutId }),
   });
 }
+
+export function resendEmail(checkoutId: string, email: string): Request {
+  return new Request(`${process.env.VUE_APP_BACKEND_HOST}/sendmail`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    mode: 'cors',
+    cache: 'no-cache',
+    body: JSON.stringify({checkoutId, email}),
+  });
+}
+
+export function sendText(checkoutId: string, phone: string): Request {
+  return new Request(`${process.env.VUE_APP_BACKEND_HOST}/sendtext`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    mode: 'cors',
+    cache: 'no-cache',
+    body: JSON.stringify({checkoutId, phone}),
+  });
+}

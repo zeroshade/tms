@@ -5,8 +5,44 @@ interface PInfo {
   name: string;
   desc: string;
   color: string;
+  fish: Fish;
   showTickets: boolean;
+  boatId: number;
 }
+
+export enum Fish {
+  BlueFish = 'bluefish',
+  Cod = 'codfish',
+  CodFlounder = 'cod-flounder',
+  SeaBass = 'seabass',
+  Fluke = 'fluke',
+  StriperSea = 'new-striped-bass',
+  SeaBassFluke = 'seabassfluke',
+  Striper = 'striper',
+  OvernightTile = 'overnighttile',
+  OvernightCod = 'overnightcod',
+  SeaBass22Hr = 'seabass22hours',
+  SeaBassCod = 'seabasscod',
+  SeaBassPorgie = 'seabassporgies',
+  Fourth = 'fourth',
+}
+
+export const FishToImg: {[key in Fish]: {img: string, height: number, width: number}} = {
+  'bluefish': { img: 'bluefish.png', width: 70, height: 27 },
+  'codfish': { img: 'codfish.png', width: 90, height: 36 },
+  'cod-flounder': { img: 'cod-flounder.png', width: 86, height: 44 },
+  'seabass': { img: 'sea-bass.png', width: 80, height: 45 },
+  'fluke': { img: 'fluke.png', width: 65, height: 39 },
+  'new-striped-bass': { img: 'striper-seabass.png', width: 65, height: 33 },
+  'seabassfluke': { img: 'fluke-seabass-combo.png', width: 80, height: 45 },
+  'striper': { img: 'stripers.png', width: 90, height: 43 },
+  'overnighttile': { img: 'overnight-tile.png', width: 90, height: 60 },
+  'overnightcod': { img: 'overnight-cod.png', width: 90, height: 39 },
+  'seabass22hours': { img: 'seabass-22hours.png', width: 90, height: 50 },
+  'seabasscod': { img: 'seabass-cod.png', width: 90, height: 39 },
+  'seabassporgies': { img: 'seabass-porgies.png', width: 90, height: 50 },
+  'fourth': { img: '4th-stretched.png', width: 90, height: 50 },
+};
 
 export interface ScheduleTime {
   startTime: string;
@@ -37,6 +73,50 @@ export interface EventInfo extends Event {
   start: string;
   end: string;
   stock: number;
+  cancelled?: boolean;
+}
+
+export interface Boat {
+  id: number;
+  name: string;
+  color: string;
+}
+
+export function getBoatsReq(): Request {
+  return new Request(BASEURL + '/boats');
+}
+
+export function putBoatReq(boat: Boat): Request {
+  return new Request(BASEURL + '/boats', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(boat),
+    mode: 'cors',
+  });
+}
+
+export function createBoatReq(boat: Boat): Request {
+  return new Request(BASEURL + '/boats', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(boat),
+    mode: 'cors',
+  });
+}
+
+export function deleteBoatReq(boat: Boat): Request {
+  return new Request(BASEURL + '/boats', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(boat),
+    mode: 'cors',
+  });
 }
 
 export function getProductsReq(): Request {
