@@ -1,6 +1,22 @@
 <template>
-  <div class='event ma-auto align-center d-flex flex-row justify-space-around' :style='{fontSize: $isMobile() ? "10px" : undefined}'>
-    <template v-if='$vuetify.breakpoint.lgAndDown'>
+  <div class='event ma-auto align-center d-flex flex-row justify-space-around flex-wrap' :style='{fontSize: $isMobile() ? "10px" : undefined}'>
+    <template v-if='!flags.useFish'>
+      <template v-if='type === "month"'>
+        <span class='time ma-auto text-right pl-2 flex-grow-1'>{{ [event.startTime, 'H:m'] | moment('h:mm A') }}</span>
+        <span class='text ma-auto text-right pr-4 flex-grow-1'>{{ event.avail ? `${event.avail} Left` : 'Sold Out' }}</span>
+      </template>
+      <template v-else-if='type === "day"'>
+        <span><strong>Product:</strong> <u>{{ event.name }}</u></span>
+        <span><strong>Description:</strong> {{event.desc}}</span>
+        <span v-if='event.cancelled'>Trip Cancelled</span>
+        <span v-else>{{ event.avail ? `${event.avail} Tickets Left` : 'Sold Out' }}</span>
+      </template>
+      <template v-else-if='type === "week" || type === "4day"'>
+        <span v-if='event.cancelled'>Trip Cancelled</span>
+        <span v-else>{{ event.avail ? `${event.avail} Tickets Left` : 'Sold Out' }}</span>
+      </template>
+    </template>
+    <template v-else-if='$vuetify.breakpoint.lgAndDown'>
 
       <span v-if='event.cancelled' class='text-left pl-2 flex-grow-1'>
         <span style='width: 30%' :class='`${event.color}--text text-right`'>{{ [event.startTime, 'H:m'] | moment('h:mm A') }}</span>
@@ -42,12 +58,14 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop, Inject } from 'vue-property-decorator';
 import { EventInfo, Fish, FishToImg } from '@/api/product';
 
 @Component
 export default class Event extends Vue {
   @Prop(Object) public readonly event!: EventInfo;
+  @Prop(String) public readonly type!: string;
+  @Inject() public readonly flags!: object;
 
   public get img(): string {
     return process.env.BASE_URL + 'img/' + FishToImg[this.event.fish].img;
@@ -66,4 +84,8 @@ export default class Event extends Vue {
 <style lang="stylus" scoped>
 .event
   width 100%
+  height 100%
+
+  .time
+    width 10%
 </style>

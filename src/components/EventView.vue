@@ -7,12 +7,12 @@
       <v-toolbar :color='event.color' dark>
         <v-toolbar-title v-html='event.name' />
         <v-spacer />
-        <img v-if='event.fish === "fluke"' src='@/assets/fluke.png' height='50px' :aspect-ratio='1.875' />
-        <img v-else-if='event.fish === "atlanticcod"' src='@/assets/atlanticcod.png' height='40px' :aspect-ratio='2.5' />
-        <img v-else-if='event.fish === "new-striped-bass"' src='@/assets/new-striped-bass.png' height='45px' :aspect-ratio='2.1' />
-        <img v-else-if='event.fish === "seabass"' src='@/assets/seabass.png' height='50px' :aspect-ratio='1.75' />
-        <img v-else-if='event.fish === "seabassfluke"' src='@/assets/seabassfluke.png' height='50px' :aspect-ratio='1.77' />
-        <img v-else-if='event.fish === "striper"' src='@/assets/striper.png' height='50px' :aspect-ratio='2.2' />
+        <img v-if='flags.useFish && event.fish === "fluke"' src='@/assets/fluke.png' height='50px' :aspect-ratio='1.875' />
+        <img v-else-if='flags.useFish && event.fish === "atlanticcod"' src='@/assets/atlanticcod.png' height='40px' :aspect-ratio='2.5' />
+        <img v-else-if='flags.useFish && event.fish === "new-striped-bass"' src='@/assets/new-striped-bass.png' height='45px' :aspect-ratio='2.1' />
+        <img v-else-if='flags.useFish && event.fish === "seabass"' src='@/assets/seabass.png' height='50px' :aspect-ratio='1.75' />
+        <img v-else-if='flags.useFish && event.fish === "seabassfluke"' src='@/assets/seabassfluke.png' height='50px' :aspect-ratio='1.77' />
+        <img v-else-if='flags.useFish && event.fish === "striper"' src='@/assets/striper.png' height='50px' :aspect-ratio='2.2' />
         <v-spacer />
         {{ [event.start, 'YYYY-MM-DD H:mm'] | moment('ddd, MMM Do') }}
       </v-toolbar>
@@ -78,7 +78,7 @@
           Back to Calendar
         </v-btn>
         <v-spacer />
-        <v-btn text tile link height='59' @click='$emit("input", false); $emit("show-cart")'>
+        <v-btn v-if='flags.customCartBtn' text tile link height='59' @click='$emit("input", false); $emit("show-cart")'>
           Review and Checkout
           <v-badge class='mr-4 mb-1'
             overlap
@@ -93,13 +93,21 @@
             <v-icon style='font-family: "Material Icons Outlined"' size='55px'>shopping_cart</v-icon>
           </v-badge>
         </v-btn>
+        <v-btn v-else x-large icon @click='$emit("input", false); $emit("show-cart")'>
+          <v-badge :value='true' color='success' class='mr-4'>
+            <template v-slot:badge>
+              <span>{{ total }}</span>
+            </template>
+            <v-icon large>shopping_cart</v-icon>
+          </v-badge>
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop, Inject } from 'vue-property-decorator';
 import { EventInfo, Boat } from '@/api/product';
 import { Getter, Mutation } from 'vuex-class';
 import TicketCategory, { CartItem } from '@/api/tickets';
@@ -129,6 +137,7 @@ export default class EventView extends Vue {
   @Getter('cart/total') public readonly total!: number;
   @Getter('cart/items') public readonly items!: CartItem[];
   @Getter('product/boatByID') public getBoat!: (id: number) => Boat;
+  @Inject() public readonly flags!: object;
 
   public qty: {[name: string]: string} = {
     adult: '0',

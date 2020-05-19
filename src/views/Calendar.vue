@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app :style='{"--bg-color": `#${flags.bgcolor}`, "--cal-outside-bg": `#${flags.outsideBg}`}'>
     <v-container fluid>
       <v-row class='fill-height'>
         <v-col>
@@ -8,42 +8,13 @@
             :months='months'
             :calendar='$refs.calendar'
             :cur-month='start ? start.month : null'
+            @click:today='setToday'
             @click:month='setMonth'
+            @click:cart='showCart = true'
+            @click:view='type = $event'
+            :type='type'
           />
-              <!-- <v-btn outlined class='mr-4' color='grey darken-2' @click='setToday'>
-                Today
-              </v-btn> -->
-              <!-- <v-btn fab text color='grey darken-2' @click='$refs.calendar.prev()'>
-                <v-icon>keyboard_arrow_left</v-icon> Previous
-              </v-btn>
-              <v-spacer />
-              <v-btn fab text color='grey darken-2' @click='$refs.calendar.next()'>
-                Next <v-icon>keyboard_arrow_right</v-icon>
-              </v-btn> -->
-              <!-- <v-toolbar-title>{{ title }}</v-toolbar-title>
-              <v-spacer /> -->
-              <!-- <v-badge
-                class='mr-7'
-                :content='total'
-                :value='total'
-                >
-                <v-icon @click='showCart = true'>shopping_cart</v-icon>
-              </v-badge> -->
-              <!-- <v-menu bottom right offset-y>
-                <template v-slot:activator='{on}'>
-                  <v-btn outlined color='grey darken-2' v-on='on'>
-                    <span>{{typeToLabel[type]}}</span>
-                    <v-icon right>keyboard_arrow_down</v-icon>
-                  </v-btn>
-                </template>
-                <v-list>
-                  <v-list-item v-for='(label, key) in typeToLabel' :key='key' @click='type = key'>
-                    <v-list-item-title>{{label}}</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-              </v-menu> -->
-            <!-- </v-toolbar> -->
-          <!-- </v-sheet> -->
+
           <!-- <v-sheet :height='calendarHeight'> -->
             <v-calendar
               ref='calendar'
@@ -57,8 +28,8 @@
               :first-interval='firstInterval'
               :interval-count='25-firstInterval'
               :events='events'
-              event-color=''
-              event-text-color='black'
+              :event-color='flags.useFish ? "" : (e) => e.color'
+              :event-text-color='flags.useFish ? "black" : undefined'
               :show-interval-label='showIntervalLabel'
               :interval-format='intervalFormat'
               @click:date='viewDay'
@@ -73,18 +44,9 @@
               </template>
 
               <template v-slot:event='{event, outside}'>
-                <event v-if='!outside' :event='event' />
+                <event v-if='!outside' :type='type' :event='event' />
               </template>
 
-              <!-- <template v-slot:event='{ event }'>
-                <span class='d-inline-flex justify-space-between mt-1' style='width: 100%'>
-                <strong class='ml-1'>{{ event.startTime | formatTime }}</strong>
-                <img v-if='event.fish === "striper"' class='mr-1' src='@/assets/striper.png' height='20px' width='30px' />
-                <img v-else-if='event.fish === "seabass"' class='mr-1' src='@/assets/seabass.png' height='20px' width='30px' />
-                <img v-else-if='event.fish === "fluke"' class='mr-1' src='@/assets/fluke.png' height='20px' width='30px' />
-                <span v-else class='ml-auto mr-auto'>{{ event.name }}</span>
-                </span>
-              </template> -->
             </v-calendar>
             <event-view v-model='selectedOpen'
               :event='selectedEvent'
@@ -108,7 +70,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Ref } from 'vue-property-decorator';
+import { Component, Vue, Ref, Provide } from 'vue-property-decorator';
 import { Getter, Mutation, Action } from 'vuex-class';
 import Product, { EventInfo, Fish } from '@/api/product';
 import { ScheduleSold, ManualOverride } from '@/api/tickets';
@@ -144,6 +106,13 @@ interface Cal extends Vue {
   updateTimes(): void;
 }
 
+function toBool(arg: string | boolean): boolean {
+  if (typeof arg === 'string') {
+    return (/true/i).test(arg);
+  }
+  return arg;
+}
+
 @Component({
   filters: {
     formatTime(t: string): string {
@@ -170,6 +139,15 @@ export default class Calendar extends Vue {
   @Action('tickets/getOverrideRange') public getOverrides!: (payload: {from: moment.Moment, to: moment.Moment})
     => Promise<ManualOverride[]>;
   @Ref('calendar') public readonly calendar!: Cal;
+  @Provide() public readonly flags = {
+    todayBtn: toBool(process.env.VUE_APP_TODAY || true),
+    bgcolor: process.env.VUE_APP_CALENDAR_BG || 'FFFFFF',
+    cartBtn: toBool(process.env.VUE_APP_CART_BTN || true),
+    monthViewOnly: toBool(process.env.VUE_APP_MONTH_ONLY || false),
+    outsideBg: process.env.VUE_APP_CALENDAR_OUTSIDE_BG || 'F7F7F7',
+    useFish: toBool(process.env.VUE_APP_USE_FISH || false),
+    customCartBtn: toBool(process.env.VUE_APP_CUSTOM_CART_BTN || false),
+  };
 
   public readonly calendarHeight = process.env.VUE_APP_CALENDAR_HEIGHT;
   public focus = '';
@@ -201,13 +179,6 @@ export default class Calendar extends Vue {
   public order: OrderDetails|null = null;
 
   public monthList: number[] = [];
-
-  public typeToLabel = {
-    'month': 'Month',
-    'week': 'Week',
-    'day': 'Day',
-    '4day': '4 Days',
-  };
 
   public async checkedOut(ev: OrderDetails) {
     this.$gtag.purchase({
@@ -362,7 +333,9 @@ export default class Calendar extends Vue {
 
   public viewDay(arg: CalDate) {
     this.focus = arg.date;
-    // this.type = 'day';
+    if (!this.flags.monthViewOnly) {
+      this.type = 'day';
+    }
   }
 
   public getEventColor(ei: EventInfo): string {
@@ -409,7 +382,7 @@ export default class Calendar extends Vue {
 .theme--light
   &.v-application,
   &.v-toolbar.v-sheet
-    background #C2E0FF
+    background var(--bg-color)
 
 .v-calendar-weekly
   height unset

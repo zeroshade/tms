@@ -11,9 +11,16 @@
 </template>
 
 <script lang='ts'>
-import { Component, Vue, Watch } from 'vue-property-decorator';
+import { Component, Vue, Watch, Provide } from 'vue-property-decorator';
 import NavBar from './components/NavBar.vue';
 import { Action, Getter } from 'vuex-class';
+
+function toBool(arg: string | boolean): boolean {
+  if (typeof arg === 'string') {
+    return (/true/i).test(arg);
+  }
+  return arg;
+}
 
 @Component({
   components: {
@@ -25,6 +32,9 @@ export default class App extends Vue {
   @Action('auth/logout') public logMeOut!: (o?: any) => void;
   @Getter('auth/autherror') public autherror!: Error | null;
   @Getter('auth/authenticated') public readonly authed!: boolean;
+  @Provide() public readonly flags = {
+    useFish: toBool(process.env.VUE_APP_USE_FISH || false),
+  };
 
   public showNav = true;
 

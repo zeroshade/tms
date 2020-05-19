@@ -3,7 +3,7 @@
 $calendar-line-width: 1px !default;
 $material-light: (
   'calendar': (
-    'outside-background-color': #C9E0FF,
+    'outside-background-color': var(--cal-outside-bg),
     'line-color': map-get($grey, 'darken-2'),
   ),
 );
