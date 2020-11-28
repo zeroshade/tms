@@ -31,5 +31,7 @@ public/img/*.jpg
 public/img/*.gif
 src/assets/*.jpg
 src/assets/*.gif
+public/lauralee*
+public/seal*
 
 dist_*
