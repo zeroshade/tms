@@ -12,7 +12,7 @@
         <v-data-table dense :custom-sort='customSort' group-by='event.start' item-key='item.sku'
            hide-default-footer :items='items' :headers='headers' class='elevation-3'>
           <template v-slot:group.header="{group }">
-            <strong class='ml-3'>{{ [group, 'YYYY-MM-DD HH:mm'] | moment('MMM Do, YYYY [at] h:mm A') }}</strong>
+            <strong class='ml-3'>{{ [group, 'YYYY-MM-DD H:mm'] | moment('MMM Do, YYYY [at] h:mm A') }}</strong>
           </template>
           <template v-slot:item.price="{ item }">
             {{ item.item.unit_amount.value | money }}
@@ -22,7 +22,7 @@
                 v-model='item.item.quantity'
                 label='Quantity'
                 style='width: 75px;'
-                :items='Array(Math.min(item.event.avail - grouped.get(item.item.description) + Number(item.item.quantity), 30)).fill().map((_, idx) => String(1 + idx))' />
+                :items='Array(Math.min(item.event.avail - grouped.get(item.event.startTime) + Number(item.item.quantity), 30)).fill().map((_, idx) => String(1 + idx))' />
           </template>
           <template v-slot:item.subtotal="{ item }">
             <animated-number :value='item.item.quantity * item.item.unit_amount.value' :format='(val) => "$" + Number(val).toFixed(2)' />
@@ -61,14 +61,18 @@
         </v-row>
       </v-card-text>
       <v-divider />
-      <v-card-actions class='flex-column'>
+      <v-card-actions :class='flags.verticalPaypal ? "flex-column" : ""'>
         <p id='error-checkout' class='pr-2' v-if='errormsg.length > 0'>
           {{ errormsg }}
         </p>
-        <p class='subtitle-2'>Choose Your Payment Method</p>
-
-          <paypal-checkout
+        <p v-if='flags.verticalPaypal' class='subtitle-2'>Choose Your Payment Method</p>
+          <v-spacer v-if='!flags.verticalPaypal' />
+          <checkout-stripe v-if='flags.paymentHandler === "STRIPE"'
+            :items='items.filter((i) => i.item.quantity > 0).map((i) => i.item)'
+          />
+          <paypal-checkout v-if='flags.paymentHandler === "PAYPAL"'
             class='checkout'
+            :style='{"width": flags.verticalPaypal ? "50%" : undefined, "margin": flags.verticalPaypal ? "auto": undefined}'
             :key='btnrender'
             :items='items.filter((i) => i.item.quantity > 0).map((i) => i.item)'
             currency='USD'
@@ -80,8 +84,10 @@
             :onClick='clickcheck'
             :onError='errorHandler'
             :onInit='checkinit'
+            :onDeclined='onDeclined'
             @paypal-approved='approved($event)'
-            @paypal-completed='$emit("checkout-success", $event)'
+            @paypal-cancelled='$emit("checkout-cancelled", $event)'
+            @paypal-completed='succeeded($event)'
           />
         <!-- <v-btn @click='emaildialog = true'>
           Checkout
@@ -89,6 +95,14 @@
       </v-card-actions>
       </v-form>
     </v-card>
+    <v-dialog persistant v-model='paypalDecline' max-width='768'>
+      <v-card>
+        <v-card-title>ERRORED</v-card-title>
+        <v-card-actions>
+          <v-btn text>Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-dialog persistent v-model='diag' max-width='768'>
       <v-card>
         <v-container>
@@ -128,20 +142,21 @@
 </template>
 
 <script lang='ts'>
-import { Component, Vue, PropSync, Watch, Emit } from 'vue-property-decorator';
+import { Component, Vue, PropSync, Watch, Emit, Inject } from 'vue-property-decorator';
 import { Getter, Mutation, Action } from 'vuex-class';
 // import { CartItem } from '@/store/states';
 import TicketCategory, { CartItem } from '@/api/tickets';
-import PaypalCheckout from '@/components/PayPalCheckout.vue';
+import PaypalCheckout, { ApproveActions } from '@/components/PayPalCheckout.vue';
 import AnimatedNumber from '@/components/AnimatedNumber.vue';
 import { EventInfo } from '@/api/product';
 import { Config } from '@/api/config';
+import CheckoutStripe from '@/components/stripe/StripeCheckout.vue';
 import {
   BtnLayout, ShippingPreference, PreferedPayment, UserAction,
-  BtnLabel, ClickData, ClickActions, ApproveData,
+  BtnLabel, ClickData, ClickActions, ApproveData, OrderDetails, OrderError,
 } from '@/api/paypal';
-import moment from 'moment';
 import { itemToGtag } from '../api/gtag';
+import { CalFeatureFlags } from '../api/utils';
 
 interface MerchantInfo {
   merchant_id: string;
@@ -152,6 +167,7 @@ interface MerchantInfo {
   components: {
     PaypalCheckout,
     AnimatedNumber,
+    CheckoutStripe,
   },
   filters: {
     capitalize: (value: string) => {
@@ -174,6 +190,7 @@ export default class Cart extends Vue {
   @Mutation('logError') public logErr!: (err: any) => void;
   @Getter('config') public readonly config!: Config;
   @Action('loadConfig') public loadConfig!: () => Promise<void>;
+  @Inject() public readonly flags!: CalFeatureFlags;
 
   public headers = [
     { text: 'Type', align: 'left', value: 'item.name', sortable: false},
@@ -190,6 +207,8 @@ export default class Cart extends Vue {
   public diag = false;
   public btnrender = 0;
   public prom: null | ((value?: boolean) => void) = null;
+  public paypalDecline = false;
+  public declineText = '';
 
   public readonly appcontext = {
     shipping_preference: ShippingPreference.NO_SHIPPING,
@@ -208,7 +227,7 @@ export default class Cart extends Vue {
 
   public readonly style = {
     label: BtnLabel.PAYPAL,
-    layout: BtnLayout.VERTICAL,
+    layout: this.flags.verticalPaypal ? BtnLayout.VERTICAL : BtnLayout.HORIZONTAL,
     tagline: false,
   };
 
@@ -222,6 +241,10 @@ export default class Cart extends Vue {
     email_address: process.env.VUE_APP_MERCHANT_EMAIL || '',
   };
 
+  public onDeclined(err: object, actions: ApproveActions): Promise<object> {
+    return actions.restart();
+  }
+
   public checkinit(data: object, actions: object) {
     // console.log(data, actions);
   }
@@ -230,7 +253,18 @@ export default class Cart extends Vue {
     this.loadConfig();
   }
 
-  public errorHandler(err: Error) {
+  @Emit('checkout-error')
+  public errorHandler(err: OrderError) {
+    if (err.name === 'UNPROCESSABLE_ENTITY') {
+      if (err.details[0].issue === 'INSTRUMENT_DECLINED') {
+        this.errormsg = 'Payment was declined, please try again with a different payment source.';
+      } else {
+        this.errormsg = 'PayPal was unable to process that payment, please try again or call PayPal for assistance';
+      }
+    } else {
+      this.errormsg = 'Something Went Wrong, please try again.';
+    }
+
     this.logErr(err);
   }
 
@@ -262,11 +296,11 @@ export default class Cart extends Vue {
   public get grouped(): Map<string, number> {
     const ret = new Map<string, number>();
     for (const i of this.items) {
-      let cur = ret.get(i.item.description!);
+      let cur = ret.get(i.event.startTime);
       if (!cur) {
         cur = 0;
       }
-      ret.set(i.item.description!, cur + Number(i.item.quantity));
+      ret.set(i.event.startTime, cur + Number(i.item.quantity));
     }
     return ret;
   }
@@ -300,9 +334,14 @@ export default class Cart extends Vue {
     this.$gtag.event('checkout_progress', {
       items: this.items.map((i, idx) => ({list_position: idx,  ...itemToGtag(i.item)})),
       coupon: '',
+      checkout_step: 2,
     });
-    this.emptyCart();
     this.sync = false;
+  }
+
+  @Emit('checkout-success')
+  public succeeded(data: OrderDetails) {
+    this.emptyCart();
   }
 }
 </script>
@@ -312,7 +351,7 @@ export default class Cart extends Vue {
   color red
   font-weight bold
 
-.checkout
-  width 50%
-  margin auto
+// .checkout
+  // width 50%
+  // margin auto
 </style>

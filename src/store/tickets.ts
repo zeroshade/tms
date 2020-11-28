@@ -3,7 +3,7 @@ import { RootState, TicketState } from './states';
 import TicketCategory, {
   CheckoutInfo, getPurchaseItemsReq, deleteCategoryReq, getCategoriesReq,
   saveCategories, ScheduleSold, getCurrSold, getCheckoutIdsReq, saveOverride,
-  ManualOverride, getOverrides, getOverrideRange,
+  ManualOverride, getOverrides, getOverrideRange, getCatInfoReq,
 } from '@/api/tickets';
 import { Item } from '@/api/paypal';
 import moment from 'moment';
@@ -57,14 +57,18 @@ const ticketModule: Module<TicketState, RootState> = {
     },
   },
   actions: {
+    async getCatInfo({dispatch}, id: number): Promise<TicketCategory> {
+      const resp = await dispatch('auth/makeAuthReq', getCatInfoReq(id), { root: true });
+      return await resp.json();
+    },
     async saveCategories({state, dispatch}, cats: TicketCategory[]): Promise<TicketCategory[]> {
       await dispatch('auth/makeAuthReq', saveCategories(cats), { root: true });
       await dispatch('loadCategories');
       return state.categoryList;
     },
     async deleteCategory({commit, dispatch}, id: number) {
-      await dispatch('auth/makeAuthReq', deleteCategoryReq(id), { root: true });
       commit('removeCategory', id);
+      await dispatch('auth/makeAuthReq', deleteCategoryReq(id), { root: true });
     },
     async getSold({}, payload: {from: moment.Moment, to: moment.Moment}): Promise<ScheduleSold[]> {
       return await getCurrSold(payload.from, payload.to);

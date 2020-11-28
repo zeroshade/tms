@@ -14,7 +14,7 @@ export default class AnimatedNumber extends Vue {
   public tweeningValue = 0;
 
   public created() {
-    this.$loadScript('https://cdn.jsdelivr.net/npm/tween.js@16.3.4');
+    // this.$loadScript('https://cdn.jsdelivr.net/npm/tween.js@16.3.4');
   }
 
   public mounted() {
@@ -35,8 +35,8 @@ export default class AnimatedNumber extends Vue {
 
     const myTween = new TWEEN.Tween({ tweeningValue: startVal })
       .to({ tweeningValue: endVal }, 500)
-      .onUpdate((obj: any) => {
-        this.tweeningValue = obj.tweeningValue.toFixed(2);
+      .onUpdate((obj: number) => {
+        this.tweeningValue = (obj * (endVal - startVal)) + startVal;
       })
       .onComplete(() => {
         cancelAnimationFrame(frameHandler);

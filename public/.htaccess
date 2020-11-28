@@ -5,9 +5,9 @@ RewriteRule ^(.*) https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteBase /ticketmgmt/admin
+  RewriteBase /calendar/admin
   RewriteRule ^admin/index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule . /ticketmgmt/admin/index.html [L]
+  RewriteRule . /calendar/admin/index.html [L]
 </IfModule>

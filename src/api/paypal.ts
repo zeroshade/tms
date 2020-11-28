@@ -79,7 +79,7 @@ export interface PurchaseUnit {
   custom_id?: string; // max length 127
   invoice_id?: string; // max length 127
   soft_descriptor?: string; // max length 22
-  amount: Amount;
+  amount?: Amount;
   items?: Item[];
   payments?: {
     captures: CapturedPayment[];
@@ -125,6 +125,7 @@ export interface OrderApplicationContext {
 export interface ApproveData {
   orderID: string;
   payerID: string;
+  facilitatorAccessToken: string;
 }
 
 export interface OrderDetails {
@@ -133,19 +134,27 @@ export interface OrderDetails {
   intent: string;
   links: Array<{href: string, method: string, rel: string, title: string}>;
   payer: {
-    address: {
+    address?: {
       country_code: string;
     };
     email_address: string;
-    payer_id: string;
+    payer_id?: string;
     name: { given_name: string; surname: string; };
-    phone: {
+    phone?: {
       phone_number: { national_number: string; };
     };
   };
   status: string;
   update_time: string;
   purchase_units: PurchaseUnit[];
+}
+
+export interface OrderError {
+  debug_id: string;
+  message: string;
+  name: string;
+  links: Array<{href: string, method: string, rel: string}>;
+  details: Array<{issue: string, description: string}>;
 }
 
 export enum BtnLayout {
@@ -216,5 +225,17 @@ export function sendText(checkoutId: string, phone: string): Request {
     mode: 'cors',
     cache: 'no-cache',
     body: JSON.stringify({checkoutId, phone}),
+  });
+}
+
+export function captureOrder(orderId: string): Request {
+  return new Request(`${process.env.VUE_APP_BACKEND_HOST}/capture`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    mode: 'cors',
+    cache: 'no-cache',
+    body: JSON.stringify({orderId}),
   });
 }

@@ -1,33 +1,42 @@
 <template>
-  <div class='event ma-auto align-center d-flex flex-row justify-space-around flex-wrap' :style='{fontSize: $isMobile() ? "10px" : undefined}'>
+  <div class='event ma-auto align-center d-flex flex-row justify-space-around' :style='{fontSize: $isMobile() ? "10px" : undefined}'>
     <template v-if='!flags.useFish'>
       <template v-if='type === "month"'>
-        <span class='time ma-auto text-right pl-2 flex-grow-1'>{{ [event.startTime, 'H:m'] | moment('h:mm A') }}</span>
-        <span class='text ma-auto text-right pr-4 flex-grow-1'>{{ event.avail ? `${event.avail} Left` : 'Sold Out' }}</span>
+        <span class='ma-auto text-left pl-1 flex-grow-1'>
+          {{ event.name }}<br />{{ getBoat(event.boatId).name }}
+        </span>
+        <span class='time ma-auto text-right pr-1 flex-grow-1'>
+          {{ [event.startTime, 'H:m'] | moment('h:mm A') }}
+          <span v-if='event.showTickets && $vuetify.breakpoint.width < 1460'><br />{{event.avail ? `${event.avail} Left` : 'Sold Out' }}</span>
+        </span>
+        <span v-if='event.showTickets && $vuetify.breakpoint.width >= 1460' class='text ma-auto text-right pr-4 flex-grow-1'>
+          {{ event.avail ? `${event.avail} Left` : 'Sold Out' }}
+        </span>
       </template>
       <template v-else-if='type === "day"'>
         <span><strong>Product:</strong> <u>{{ event.name }}</u></span>
         <span><strong>Description:</strong> {{event.desc}}</span>
         <span v-if='event.cancelled'>Trip Cancelled</span>
-        <span v-else>{{ event.avail ? `${event.avail} Tickets Left` : 'Sold Out' }}</span>
+        <span v-else>{{ event.avail > 0 ? `${event.avail} Tickets Left` : 'Sold Out' }}</span>
       </template>
       <template v-else-if='type === "week" || type === "4day"'>
+        <span>{{ event.name }}<br />{{ getBoat(event.boatId).name }}</span>
         <span v-if='event.cancelled'>Trip Cancelled</span>
-        <span v-else>{{ event.avail ? `${event.avail} Tickets Left` : 'Sold Out' }}</span>
+        <span v-else>{{ event.avail > 0 ? `${event.avail} Tickets Left` : 'Sold Out' }}</span>
       </template>
     </template>
     <template v-else-if='$vuetify.breakpoint.lgAndDown'>
 
       <span v-if='event.cancelled' class='text-left pl-2 flex-grow-1'>
         <span style='width: 30%' :class='`${event.color}--text text-right`'>{{ [event.startTime, 'H:m'] | moment('h:mm A') }}</span>
-        <p class='text-center'>Cancelled</p>
+        <span class='ml-3'>Cancelled</span>
       </span>
 
       <template v-else>
         <span class='text-right pl-0' style='width: 30%'>
           <span :class='`${event.color}--text`'>{{ [event.startTime, 'H:m'] | moment('h:mm A') }}</span>
           <span v-if='event.showTickets'><br />
-            {{ event.avail ? `${event.avail} Left`: `Sold Out` }}
+            {{ event.avail > 0 ? `${event.avail} Left`: `Sold Out` }}
           </span>
         </span>
         <v-img v-if='event.fish.length' :src='img' :aspect-ratio='width/height'
@@ -59,12 +68,14 @@
 
 <script lang="ts">
 import { Component, Vue, Prop, Inject } from 'vue-property-decorator';
-import { EventInfo, Fish, FishToImg } from '@/api/product';
+import { EventInfo, Fish, FishToImg, Boat } from '@/api/product';
+import { Getter } from 'vuex-class';
 
 @Component
 export default class Event extends Vue {
   @Prop(Object) public readonly event!: EventInfo;
   @Prop(String) public readonly type!: string;
+  @Getter('product/boatByID') public getBoat!: (id: number) => Boat;
   @Inject() public readonly flags!: object;
 
   public get img(): string {

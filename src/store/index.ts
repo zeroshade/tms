@@ -28,9 +28,11 @@ export interface Orders {
   payer: string;
   email: string;
   qty: number;
-  coid: string;
+  coid?: string;
+  id?: string;
   sku: string;
-  payerId: string;
+  payerId?: string;
+  paymentId?: string;
   status: string;
 }
 

@@ -1,7 +1,14 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
+const MomentLocalesPlugin = require('moment-locales-webpack-plugin');
+const MomentTimezoneDataPlugin = require('moment-timezone-data-webpack-plugin');
 
 module.exports = {
+  css: {
+    extract: process.env.NODE_ENV === 'production' ? {
+      ignoreOrder: true,
+    }: false,
+  },
   devServer: {
     host: '0.0.0.0',
     port: '8080',
@@ -15,7 +22,7 @@ module.exports = {
     config
       .plugin('html-calendar')
       .tap(args => {
-        args[0].minify = false;
+          args[0].minify = false;
         return args;
       })
   },
@@ -33,7 +40,7 @@ module.exports = {
       filename: 'calendar/index.html',
     }
   },
-  productionSourceMap: false,
+  productionSourceMap: true,
   configureWebpack: {
     plugins: [new HtmlWebpackPlugin({
       templateParameters: {
@@ -46,6 +53,9 @@ module.exports = {
       chunks: [],
     }), new CompressionPlugin({
       test: /\.js(\?.*)?$/i,
+    }), new MomentLocalesPlugin(),
+    new MomentTimezoneDataPlugin({
+      matchZones: /^America/
     })]
   },
   pwa: {

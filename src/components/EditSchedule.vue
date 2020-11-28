@@ -2,10 +2,10 @@
   <v-container>
     <v-row>
       <v-col md="2" class='mt-n3'>
-        <date-input v-model='sched.start' label='Start' :max='sched.end' />
+        <date-input include-year v-model='sched.start' label='Start' :max='sched.end' />
       </v-col>
       <v-col offset-md="1" md="2" class='mt-n3'>
-        <date-input v-model='sched.end' label='End' :min='sched.start' />
+        <date-input include-year v-model='sched.end' label='End' :min='sched.start' />
       </v-col>
       <v-col offset-md="1" md="6">
         <v-select v-model='dayArray' :items='days' dense
@@ -74,7 +74,7 @@
         <v-row no-gutters dense align='start' justify='start'
           v-for='(na, idx) in sched.notAvailArray' :key='`na-${idx}`'>
           <v-col>
-            <date-input field-cls='mt-0 pt-0' required
+            <date-input field-cls='mt-0 pt-0' required include-year
               :min='sched.start' :max='sched.end' :events='dateInSched'
               v-model='sched.notAvailArray[idx]' label='Not Available On' />
           </v-col>

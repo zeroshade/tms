@@ -1,7 +1,9 @@
 import { Auth } from '@/api/auth';
 import { AuthState, RootState } from './states';
 import { Module } from 'vuex';
-import getUsers, { User, addUser, deleteUser } from '@/api/users';
+import getUsers, { User, addUser, deleteUser, resetPass } from '@/api/users';
+import { RedirectLoginResult } from '@auth0/auth0-spa-js/dist/typings/global';
+import { Logged, getLoggedActions } from '@/api/utils';
 
 const auth = new Auth();
 export function getAuthInstance(): Auth {
@@ -81,13 +83,23 @@ const authModule: Module<AuthState, RootState> = {
       const resp = await dispatch('makeAuthReq', getUsers());
       commit('setUsers', await resp.json());
     },
-    async addUser({dispatch}, u: User): Promise<void> {
-      await dispatch('makeAuthReq', addUser(u));
-      return;
+    async addUser({dispatch}, u: User): Promise<null | string> {
+      const resp: Response = await dispatch('makeAuthReq', addUser(u));
+      if (resp.ok) {
+        return null;
+      }
+
+      return ((await resp.json()) as {err: string}).err;
     },
     async deleteUser({dispatch}, userid: string): Promise<void> {
       await dispatch('makeAuthReq', deleteUser(userid));
       await dispatch('loadUsers');
+    },
+    async resetPass({dispatch}, payload: {userid: string, newpass: string}): Promise<void> {
+      await dispatch('makeAuthReq', resetPass(payload.userid, payload.newpass));
+    },
+    async getLogs({dispatch}): Promise<Logged[]> {
+      return await (await dispatch('makeAuthReq', getLoggedActions())).json();
     },
   },
 };

@@ -4,9 +4,9 @@
     <v-app-bar dense app v-if='$isMobile()'>
       <v-app-bar-nav-icon @click='showNav = true'></v-app-bar-nav-icon>
     </v-app-bar>
-    <v-content fill-height class='stretch'>
+    <v-main fill-height class='stretch'>
       <router-view />
-    </v-content>
+    </v-main>
   </v-app>
 </template>
 
@@ -34,6 +34,9 @@ export default class App extends Vue {
   @Getter('auth/authenticated') public readonly authed!: boolean;
   @Provide() public readonly flags = {
     useFish: toBool(process.env.VUE_APP_USE_FISH || false),
+    hasTicketLeft: toBool(process.env.VUE_APP_HAS_TICKET_LEFT || false),
+    reportAutoDate: toBool(process.env.VUE_APP_REPORT_AUTO_DATE || true),
+    hasReports: toBool(process.env.VUE_APP_USE_REPORTS || false),
   };
 
   public showNav = true;

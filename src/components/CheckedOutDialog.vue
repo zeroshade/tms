@@ -13,7 +13,7 @@
         </v-row>
         <v-row dense>
           <v-col cols='9'>
-            <p>An email has also been sent to <strong>{{ details.payer.email_address }}</strong> containing a link
+            <p class='text-h5'>An email has also been sent to <strong class='yellow lighten-2'>{{ details.payer.email_address }}</strong> containing a link
             to download the boarding passes. If the email is incorrect or you would like to receive your tickets at
             a different email address or via text message, please enter your information below:</p>
           </v-col>
@@ -111,7 +111,7 @@ export default class CheckedOutDialog extends Vue {
   }
 
   public mounted() {
-    if (this.details != null) {
+    if (this.details != null && this.details.payer.phone) {
       this.phone = this.details.payer.phone.phone_number.national_number;
     }
   }

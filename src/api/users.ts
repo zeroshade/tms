@@ -7,6 +7,7 @@ export interface User {
   app_metadata: { role: string };
   password?: string;
   username: string;
+  [key: string]: any;
 }
 
 export default function getUsers(): Request {
@@ -31,5 +32,16 @@ export function deleteUser(userid: string): Request {
   return new Request(BASEURL + `/user/${userid}`, {
     method: 'DELETE',
     mode: 'cors',
+  });
+}
+
+export function resetPass(userid: string, newpass: string): Request {
+  return new Request(BASEURL + `/user/${userid}/passwd`, {
+    method: 'POST',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({newpass}),
   });
 }

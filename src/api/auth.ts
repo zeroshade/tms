@@ -37,7 +37,7 @@ export class Auth {
         // Notify subscribers that the redirect callback has happened, passing the appState
         // (useful for retrieving any pre-authentication state)
         this.error = null;
-        this.redirectCallback(appState);
+        // this.redirectCallback(appState);
       }
     } catch (e) {
       this.error = e;

@@ -1,7 +1,7 @@
 import { Module } from 'vuex';
 import { RootState, ProductState } from './states';
 import Product, { getProductsReq, putProduct, deleteProduct, Boat,
-  createBoatReq, putBoatReq, deleteBoatReq, getBoatsReq } from '@/api/product';
+  createBoatReq, putBoatReq, deleteBoatReq, getBoatsReq, getProdInfoReq } from '@/api/product';
 
 const productModule: Module<ProductState, RootState> = {
   namespaced: true,
@@ -79,6 +79,10 @@ const productModule: Module<ProductState, RootState> = {
     async deleteBoat({dispatch}, boat: Boat) {
       await dispatch('auth/makeAuthReq', deleteBoatReq(boat), { root: true });
       await dispatch('loadBoats');
+    },
+    async getProdInfo({dispatch}, id: number): Promise<Product> {
+      const resp = await dispatch('auth/makeAuthReq', getProdInfoReq(id), { root: true });
+      return await resp.json();
     },
   },
 };

@@ -9,7 +9,8 @@
       <v-col>
         <v-card>
           <div class='ml-1 pt-2' style='width: 150px'>
-          <date-input label='Date' v-model='date' include-year />
+            <date-input v-if='!flags.reportAutoDate' label='Date' v-model='date' include-year />
+            <p v-else><strong>Date:</strong> {{ date | moment('M/DD/YYYY') }}</p>
           </div>
           <v-card-text>
             <tiptap-vuetify class='editor'
@@ -27,7 +28,7 @@
 </template>
 
 <script lang='ts'>
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop, Inject } from 'vue-property-decorator';
 import { Action, Getter } from 'vuex-class';
 import { Report } from '@/api/reports';
 import DateInput from '@/components/DateInput.vue';
@@ -48,6 +49,7 @@ export default class EditReport extends Vue {
   @Action('loadReports') public loadReports!: () => Promise<void>;
   @Action('saveReport') public saveReport!: (r: Report) => Promise<void>;
   @Getter('reports') public readonly reports!: Report[];
+  @Inject() public readonly flags!: object;
 
   public readonly extensions = [
     History,
@@ -67,7 +69,7 @@ export default class EditReport extends Vue {
     }],
   ];
 
-  public date = '';
+  public date = moment().format('YYYY-MM-DD');
 
   public localReport: Report = {
     content: '',

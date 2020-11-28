@@ -31,12 +31,12 @@
                 </v-col>
                 <v-col cols="4" md="2">
                   <v-select label='Color'
-                    :items='["blue", "red"]'
+                    :items='colorOpts'
                     v-model='color' />
                 </v-col>
               </v-row>
               <v-row>
-                <v-col md="3">
+                <v-col md="3" v-if='flags.useFish'>
                   <v-select label='Fish'
                     v-model='fish'
                     :items='fishOpts'
@@ -109,11 +109,12 @@
 </template>
 
 <script lang='ts'>
-import { Component, Vue, Prop, Watch } from 'vue-property-decorator';
+import { Component, Vue, Prop, Watch, Inject } from 'vue-property-decorator';
 import { Schedule, Fish } from '@/api/product';
 import EditSchedule from '@/components/EditSchedule.vue';
 import { Action, Getter } from 'vuex-class';
 import Product, { Boat } from '@/api/product';
+import colors from 'vuetify/lib/util/colors';
 
 function fixDate(year: number, day: string): string {
   if (day.length <= 5) {
@@ -133,6 +134,7 @@ export default class ProductForm extends Vue {
   @Getter('product/products') public prods!: Product[];
   @Getter('product/boats') public boats!: Boat[];
   @Prop({ default: -1}) public id!: number;
+  @Inject() public readonly flags!: object;
 
   public stepper = 1;
 
@@ -156,6 +158,14 @@ export default class ProductForm extends Vue {
       ret.push({text: fishkeys[i], value: fishvals[i]});
     }
     return ret;
+  }
+
+  public get colorOpts(): Array<{text: string, value: string}> {
+    return Object.keys(colors).filter((c) => c !== 'shades').map((v) => ({text: v, value: this.camelToDash(v)}));
+  }
+
+  public camelToDash(v: string): string {
+    return v.replace(/[\w]([A-Z])/g, (m) => m[0] + '-' + m[1]).toLowerCase();
   }
 
   @Watch('prods')
@@ -217,10 +227,7 @@ export default class ProductForm extends Vue {
     const y = new Date().getFullYear();
     for (const s of p.schedList) {
       const newsched = {...s};
-      newsched.start = fixDate(y, newsched.start);
-      newsched.end = fixDate(y, newsched.end);
       newsched.timeArray = s.timeArray.map((v) => ({...v}));
-      newsched.notAvailArray = newsched.notAvailArray.map((n) => fixDate(y, n));
       this.schedList.push(newsched);
     }
   }

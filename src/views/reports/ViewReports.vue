@@ -22,7 +22,7 @@
             {{ value | moment('M/D/YY, h:mm A') }}
           </template>
           <template v-slot:item.content='{ value }'>
-            <div style='max-width: 750px; min-height: 50px'  v-html='value' class='content-row'></div>
+            <div :style='{"--max-width": $vuetify.breakpoint.mdAndUp ? "750px" : "250px"}' v-html='value' class='content-row'></div>
           </template>
           <template v-slot:item.actions='{ item }'>
             <v-btn class='mr-3' icon :to='{ name: "editreport", params: { id: item.id } }'><v-icon>edit</v-icon></v-btn>
@@ -84,6 +84,8 @@ export default class ViewReports extends Vue {
 .content-row
   text-overflow ellipsis
   overflow hidden
-  white-space nowrap
-  height 25px
+  min-height 50px
+  max-width var(--max-width)
+  // white-space nowrap
+  // height 25px
 </style>

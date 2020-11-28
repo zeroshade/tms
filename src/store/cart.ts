@@ -1,9 +1,10 @@
 import { Module } from 'vuex';
 import { EventInfo } from '@/api/product';
 import { ShoppingCartState, RootState } from './states';
-import { Item, confirmOrder, resendEmail, sendText } from '@/api/paypal';
+import { Item, confirmOrder, resendEmail, sendText, captureOrder } from '@/api/paypal';
 import { CartItem } from '@/api/tickets';
-import moment from 'moment';
+import { createSession, getSession } from '@/api/stripe';
+import moment from 'moment-timezone';
 
 const cartModule: Module<ShoppingCartState, RootState> = {
   namespaced: true,
@@ -65,14 +66,24 @@ const cartModule: Module<ShoppingCartState, RootState> = {
     async confirmOrder({}, checkoutId: string) {
       await fetch(confirmOrder(checkoutId));
     },
+    async getStripeSession({}, id: string): Promise<Response> {
+      return await fetch(getSession(id));
+    },
+    async capture({}, orderId: string): Promise<Response> {
+      return await fetch(captureOrder(orderId));
+    },
     async resendEmail({}, payload: {checkoutId: string, email: string}) {
       await fetch(resendEmail(payload.checkoutId, payload.email));
     },
     async sendText({}, payload: {checkoutId: string, phone: string}) {
       await fetch(sendText(payload.checkoutId, payload.phone));
     },
+    async createStripeSession({}, itemList: Item[]): Promise<{id: string}> {
+      const resp = await fetch(createSession(itemList));
+      return await resp.json();
+    },
     addCartItem({commit, rootGetters}, payload: { ei: EventInfo, date: string }) {
-      const d = moment(payload.date + ' ' + payload.ei.startTime, 'YYYY-MM-DD HH:mm');
+      const d = moment(payload.date + ' ' + payload.ei.startTime, 'YYYY-MM-DD H:mm').tz('America/New_York', true);
 
       const priceCat = rootGetters['tickets/categoryByName'](payload.ei.price);
       if (priceCat === null) { return; }

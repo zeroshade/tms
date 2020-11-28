@@ -7,6 +7,7 @@ import { Component, Vue, Prop } from 'vue-property-decorator';
 import { InitActions, ClickData, OrderDetails, Payee, ApproveData, Style,
          ClickActions, Money, CancelData, Item, OrderApplicationContext,
          Category, OrderIntent, PurchaseUnit } from '@/api/paypal';
+import { Action } from 'vuex-class';
 
 declare var paypal: any;
 
@@ -26,7 +27,15 @@ interface CreateActions {
   order: OrderAct;
 }
 
-interface ApproveActions {
+interface ErrorDetails {
+  name: string;
+  debug_id: string;
+  message: string;
+  details: Array<{issue: string, description: string}>;
+  links: Array<{href: string, method: string, rel: string, encType: string}>;
+}
+
+export interface ApproveActions {
   payment: null;
   redirect: () => Promise<object>;
   restart: () => Promise<object>;
@@ -51,6 +60,8 @@ export default class PaypalCheckout extends Vue {
   @Prop(Function) public readonly onInit!: (data: object, actions: InitActions) => void;
   @Prop(Function) public readonly onClick!: (data: ClickData, actions: ClickActions) => void | Promise<void>;
   @Prop(Function) public readonly onError!: (err: Error) => void;
+  @Prop(Function) public readonly onDeclined!: (err: ErrorDetails, actions: ApproveActions) => Promise<object>;
+  @Action('cart/capture') public readonly capture!: (orderId: string) => Promise<Response>;
 
   public readonly intent = OrderIntent.CAPTURE;
 
@@ -83,9 +94,18 @@ export default class PaypalCheckout extends Vue {
       },
       onApprove: (data: ApproveData, actions: ApproveActions) => {
         this.$emit('paypal-approved', data);
-        return actions.order.capture().then((details: OrderDetails) => {
-          this.$emit('paypal-completed', details);
+        return this.capture(data.orderID).then(async (r: Response) => {
+          if (r.status > 299) {
+            return Promise.reject(await r.json());
+          }
+
+          const d = await r.json();
+          this.$emit('paypal-completed', d);
+          return Promise.resolve();
         });
+        // return actions.order.capture().then((details: OrderDetails) => {
+        //   this.$emit('paypal-completed', details);
+        // });
       },
       onError: this.onError,
       onCancel: (data: CancelData) => {

@@ -2,10 +2,29 @@ export const BASEURL = `${process.env.VUE_APP_BACKEND_HOST}/info/${process.env.V
 
 import Product, { EventInfo } from '@/api/product';
 import { ScheduleSold, ManualOverride } from '@/api/tickets';
-import moment from 'moment';
-import * as momd from 'moment';
+import moment from 'moment-timezone';
+import * as momd from 'moment-timezone';
 import { extendMoment, DateRange } from 'moment-range';
 const { range } = extendMoment(momd);
+
+export enum PaymentHandler {
+  PAYPAL = 'PAYPAL',
+  STRIPE = 'STRIPE',
+}
+
+export interface CalFeatureFlags {
+  readonly todayBtn: boolean;
+  readonly bgcolor: string;
+  readonly cartBtn: boolean;
+  readonly monthViewOnly: boolean;
+  readonly outsideBg: string;
+  readonly weekdayLabelSize: string;
+  readonly useFish: boolean;
+  readonly customCartBtn: boolean;
+  readonly verticalPaypal: boolean;
+  readonly customCheckout: string;
+  readonly paymentHandler: PaymentHandler;
+}
 
 function timeToMoment(day: moment.Moment, time: string): moment.Moment {
   const [h, m] = time.split(':');
@@ -17,8 +36,8 @@ export function getMonths(prods: Product[]): number[] {
   const ranges: DateRange[] = [];
   for (const p of prods.filter((pr) => pr.publish)) {
     for (const sc of p.schedList) {
-      const s = moment(`${today.year()}-${sc.start}`, 'YYYY-MM-DD');
-      const e = moment(`${today.year()}-${sc.end}`, 'YYYY-MM-DD');
+      const s = moment(sc.start);
+      const e = moment(sc.end);
 
       const schedRange = range(s, e).snapTo('month');
       const idx = ranges.findIndex((r) => {
@@ -55,7 +74,7 @@ export function getEvents(start: moment.Moment, end: moment.Moment,
   const overrideMap = new Map<string, ManualOverride>();
   if (overrides && overrides.length > 0) {
     for (const o of overrides) {
-      const id = o.pid + String(moment(o.time).unix());
+      const id = o.pid + String(moment(o.time).tz('America/New_York', true).unix());
       overrideMap.set(id, o);
     }
   }
@@ -64,15 +83,15 @@ export function getEvents(start: moment.Moment, end: moment.Moment,
     const timeRange = range(start, end.clone().add(1, 'd'));
     for (const d of timeRange.by('day')) {
       for (const sc of p.schedList) {
-        const s = moment(`${d.year()}-${sc.start} 00:00`, 'YYYY-MM-DD HH:mm');
-        const e = moment(`${d.year()}-${sc.end} 23:59`, 'YYYY-MM-DD HH:mm');
+        const s = moment(sc.start).tz('America/New_York', true);
+        const e = moment(sc.end).tz('America/New_York', true).hour(23).minutes(59);
 
         const schedRange = range(s, e);
         if (!d.within(schedRange) || !sc.selectedDays.includes(d.day())) {
           continue;
         }
 
-        if (sc.notAvailArray.find((val) => moment(`${d.year()}-${val}`, 'YYYY-MM-DD').isSame(d, 'day'))) {
+        if (sc.notAvailArray.find((val) => moment(val, 'YYYY-MM-DD').isSame(d, 'day'))) {
           continue;
         }
 
@@ -80,6 +99,7 @@ export function getEvents(start: moment.Moment, end: moment.Moment,
         for (const t of sc.timeArray) {
           const startMoment = timeToMoment(d, t.startTime);
           const endMoment = timeToMoment(d, t.endTime);
+
 
           const ev: EventInfo = {
             stock,
@@ -101,5 +121,21 @@ export function getEvents(start: moment.Moment, end: moment.Moment,
       }
     }
   }
-  return events;
+  return events.filter((ev) => moment(ev.start, 'YYYY-MM-DD H:mm').tz('America/New_York', true).isBefore(end));
+}
+
+export interface Logged {
+  CreatedAt: string;
+  UpdatedAt: string;
+  userId: string;
+  path: string;
+  method: string;
+  message?: object;
+}
+
+export function getLoggedActions(): Request {
+  return new Request(BASEURL + '/logactions', {
+    mode: 'cors',
+    method: 'GET',
+  });
 }

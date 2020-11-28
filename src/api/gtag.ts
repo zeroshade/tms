@@ -15,10 +15,9 @@ export interface GtagItem {
 export function itemToGtag(item: Item): GtagItem {
   return {
     id: item.sku,
-    name: item.description || '',
+    name: item.name.substr(0, item.name.indexOf(',')),
     quantity: Number(item.quantity),
     price: item.unit_amount.value,
-    variant: item.name,
-    category: item.category,
+    variant: item.name.slice(item.name.indexOf(',') + 2),
   };
 }

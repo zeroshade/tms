@@ -8,8 +8,8 @@
         <v-data-table :headers='headers' :items='localCats' class='elevation-1'>
           <template v-slot:item="{ item }">
             <tr>
-              <td><inline-edit v-model='item.name' label='Edit' /></td>
-              <td v-for='key in Object.keys(item.categories).sort()' :key='key'>
+              <td><inline-edit v-model='item.name' label='Name' /></td>
+              <td v-for='key in catlist' :key='key'>
                 <inline-edit valclass='money' v-model='item.categories[key]' label='Edit' :format-num='true' />
               </td>
               <td>
@@ -53,36 +53,40 @@ export default class PriceInfo extends Vue {
 
   public localCats: TicketCategory[] = [];
 
-  public headers = [
-    {
-      text: 'Category Name',
-      align: 'left',
-      value: 'name',
-      sortable: true,
-    },
-    {
-      text: 'Adult',
-      align: 'left',
-      value: 'adult',
-      sortable: true,
-    },
-    {
-      text: 'Child',
-      align: 'left',
-      value: 'child',
-      sortable: true,
-    },
-    {
-      text: 'Senior',
-      align: 'left',
-      value: 'senior',
-      sortable: true,
-    },
-    {
+  public get catlist(): string[] {
+    return Array.from(this.localCats.reduce((acc, cur) => {
+      Object.keys(cur.categories).forEach((c) => acc.add(c));
+      return acc;
+     } , new Set<string>())).sort();
+  }
+
+  public get headers() {
+    const ret = [
+      {
+        text: 'Category Name',
+        align: 'left',
+        value: 'name',
+        sortable: true,
+      },
+    ];
+
+    this.catlist.forEach((v) => {
+       ret.push({
+         text: v.charAt(0).toUpperCase() + v.slice(1),
+         align: 'left',
+         value: v,
+         sortable: true,
+       });
+     });
+
+    ret.push({
+      text: '',
+      value: '',
       align: 'left',
       sortable: false,
-    },
-  ];
+    });
+    return ret;
+  }
 
   public async saveCats() {
     this.localCats = await this.save(this.localCats);

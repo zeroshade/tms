@@ -22,7 +22,9 @@
             {{ [value, 'H:mm'] | moment('h:mm A') }}
           </template>
           <template v-slot:item.avail='{item}'>
-            <v-text-field :disabled='item.cancelled' class='mb-n2' @change='item.modified = true' v-mask.number='"###"' v-model='item.avail' dense style='width: 70px' />
+            <v-text-field :disabled='item.cancelled' class='mb-n2'
+              @change='item.modified = true' @input='item.modified = true'
+              v-mask.number='"###"' v-model='item.avail' dense style='width: 70px' />
           </template>
           <template v-slot:item.cancel='{item}'>
             <v-checkbox v-model='item.cancelled' @change='item.modified = true' />
@@ -125,7 +127,7 @@ export default class EditTickets extends Vue {
         name: e.name,
         start: e.startTime,
         end: e.endTime,
-        avail: e.avail || e.stock,
+        avail: e.avail !== undefined ? e.avail : e.stock,
         modified: false,
         cancelled: e.cancelled || false,
       }));

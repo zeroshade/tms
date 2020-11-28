@@ -1,5 +1,9 @@
 <template>
-  <v-app :style='{"--bg-color": `#${flags.bgcolor}`, "--cal-outside-bg": `#${flags.outsideBg}`}'>
+  <v-app :style='{
+      "--bg-color": `#${flags.bgcolor}`,
+      "--cal-outside-bg": `#${flags.outsideBg}`,
+      "--cal-weekday-label": `${flags.weekdayLabelSize}`
+    }'>
     <v-container fluid>
       <v-row class='fill-height'>
         <v-col>
@@ -56,7 +60,9 @@
         </v-col>
       </v-row>
     </v-container>
-    <cart :show.sync='showCart' @paypal-approved='finalize = true' @checkout-success='checkedOut($event)' />
+    <cart :show.sync='showCart' @paypal-approved='finalize = true'
+      @checkout-error='finalize = false; showCart = true'
+      @checkout-success='checkedOut($event)' @checkout-cancelled='finalize = false' />
     <v-dialog persistent width='350' v-model='finalize'>
       <v-card color='primary' dark>
         <v-card-text>
@@ -65,7 +71,8 @@
         </v-card-text>
       </v-card>
     </v-dialog>
-    <checked-out v-model='success' :details='order' />
+
+    <component :is='flags.customCheckout' v-model='success' :details='order' />
   </v-app>
 </template>
 
@@ -75,12 +82,13 @@ import { Getter, Mutation, Action } from 'vuex-class';
 import Product, { EventInfo, Fish } from '@/api/product';
 import { ScheduleSold, ManualOverride } from '@/api/tickets';
 import { OrderDetails } from '@/api/paypal';
-import { getEvents, getMonths } from '@/api/utils';
+import { getEvents, getMonths, CalFeatureFlags, PaymentHandler } from '@/api/utils';
 import { itemToGtag } from '@/api/gtag';
-import moment from 'moment';
-import * as momd from 'moment';
+import moment from 'moment-timezone';
+import * as momd from 'moment-timezone';
 import { extendMoment } from 'moment-range';
 import CalendarTopBar from '@/components/CalendarTopBar.vue';
+import { StripeSession } from '@/api/stripe';
 
 const { range } = extendMoment(momd);
 
@@ -122,10 +130,11 @@ function toBool(arg: string | boolean): boolean {
   },
   components: {
     CalendarTopBar,
-    Event: () => import('@/components/Event.vue'),
-    Cart: () => import('@/components/Cart.vue'),
-    EventView: () => import('@/components/EventView.vue'),
-    CheckedOut: () => import('@/components/CheckedOutDialog.vue'),
+    Event: () => import(/* webpackPrefetch: true */ /* webpackChunkName: "events" */ '@/components/Event.vue'),
+    Cart: () => import(/* webpackPrefetch: true */ /* webpackChunkName: "cart" */ '@/components/Cart.vue'),
+    EventView: () => import(/* webpackPrefetch: true */ /* webpackChunkName: "events" */ '@/components/EventView.vue'),
+    CheckedOut: () => import(/* webpackPrefetch: true */ /* webpackChunkName: "cart" */ '@/components/CheckedOutDialog.vue'),
+    BasicCheckedOut: () => import(/* webpackPrefetch: true */ /* webpackChunkName: "cart" */ '@/components/BasicCheckedOut.vue'),
   },
 })
 export default class Calendar extends Vue {
@@ -138,15 +147,21 @@ export default class Calendar extends Vue {
   @Action('cart/confirmOrder') public confirmOrder!: (checkoutId: string) => Promise<void>;
   @Action('tickets/getOverrideRange') public getOverrides!: (payload: {from: moment.Moment, to: moment.Moment})
     => Promise<ManualOverride[]>;
+  @Action('cart/getStripeSession') public getStripeSession!: (id: string) => Promise<Response>;
   @Ref('calendar') public readonly calendar!: Cal;
-  @Provide() public readonly flags = {
+  @Provide() public readonly flags: CalFeatureFlags = {
     todayBtn: toBool(process.env.VUE_APP_TODAY || true),
     bgcolor: process.env.VUE_APP_CALENDAR_BG || 'FFFFFF',
     cartBtn: toBool(process.env.VUE_APP_CART_BTN || true),
     monthViewOnly: toBool(process.env.VUE_APP_MONTH_ONLY || false),
     outsideBg: process.env.VUE_APP_CALENDAR_OUTSIDE_BG || 'F7F7F7',
+    weekdayLabelSize: process.env.VUE_APP_CALENDAR_WEEKDAY_SIZE || '11px',
     useFish: toBool(process.env.VUE_APP_USE_FISH || false),
     customCartBtn: toBool(process.env.VUE_APP_CUSTOM_CART_BTN || false),
+    verticalPaypal: toBool(process.env.VUE_APP_VERTICAL_PAYPAL || false),
+    customCheckout: process.env.VUE_APP_CUSTOM_POST_CHECKOUT || 'basic-checked-out',
+    paymentHandler: process.env.VUE_APP_PAYMENT_HANDLER ?
+      process.env.VUE_APP_PAYMENT_HANDLER as PaymentHandler : PaymentHandler.PAYPAL,
   };
 
   public readonly calendarHeight = process.env.VUE_APP_CALENDAR_HEIGHT;
@@ -184,14 +199,12 @@ export default class Calendar extends Vue {
     this.$gtag.purchase({
       transaction_id: ev.id,
       affiliation: 'Pay Pal',
-      value: Number(ev.purchase_units[0].amount.value),
+      value: Number(ev.purchase_units[0].payments?.captures[0].amount.value),
       items:
         ev.purchase_units[0].items?.map((i, idx) => ({
           list_position: idx, ...itemToGtag(i),
         })),
-      checkout_step: 2,
     });
-    await this.confirmOrder(ev.id);
     this.order = ev;
     this.finalize = false;
     this.success = true;
@@ -201,13 +214,39 @@ export default class Calendar extends Vue {
     this.focus = this.today;
   }
 
-  public mounted() {
+  public async mounted() {
     this.calendar.checkChange();
+
+    if (window.location.search.includes('stripe_session_id=')) {
+      const params = new URLSearchParams(window.location.search.substring(1));
+      const stripeSession = params.get('stripe_session_id')!;
+      const status = params.get('status');
+      window.history.replaceState({}, document.title, window.location.href.split('?')[0]);
+
+      const resp = await this.getStripeSession(stripeSession);
+      const sess: StripeSession = await resp.json();
+      if (status === 'success') {
+        this.order = {
+          create_time: '',
+          intent: 'payment',
+          id: sess.payment_intent.id,
+          links: [],
+          status: sess.payment_intent.status,
+          update_time: '',
+          purchase_units: [],
+          payer: {
+            email_address: sess.payment_intent.payment_method.billing_details.email,
+            name: { given_name: sess.payment_intent.payment_method.billing_details.name, surname: '' },
+          },
+        };
+        this.success = true;
+      }
+    }
   }
 
   public setMonth(month: number) {
-    const newDate = moment().month(month - 1);
-    if (moment().isAfter(newDate)) {
+    const newDate = moment().month(month - 1).startOf('month');
+    if (moment().startOf('month').isAfter(newDate)) {
       newDate.add(1, 'year');
     }
     this.$gtag.event('view_month', {
@@ -220,7 +259,7 @@ export default class Calendar extends Vue {
   }
 
   public get months(): Date[] {
-    return this.monthList.map((m) => { const d = new Date(); d.setMonth(m); return d; });
+    return this.monthList.map((m) => new Date(Number(this.today.substring(0, 4)), m, 1, 0, 0));
   }
 
   public get monthFormatter() {
@@ -255,13 +294,13 @@ export default class Calendar extends Vue {
 
     const from = moment(arg.event.start, 'YYYY-MM-DD H:mm');
     const to = moment(arg.event.end, 'YYYY-MM-DD H:mm');
+    const evid = String(arg.event.id) + String(moment(arg.event.start, 'YYYY-MM-DD H:mm').unix());
 
     Promise.all([
       this.getSold({from, to}),
       this.getOverrides({from, to}),
     ])
     .then((v) => {
-      const evid = String(arg.event.id) + String(moment(arg.event.start, 'YYYY-MM-DD H:mm').unix());
       for (const m of v[1]) {
         const id = String(m.pid) + String(moment(m.time).unix());
         if (evid === id) {
@@ -279,7 +318,11 @@ export default class Calendar extends Vue {
     });
 
     const open = () => {
-      this.$gtag.event('view_item', arg.event);
+      this.$gtag.event('view_item', {items: [{
+        id: evid,
+        list_name: arg.event.name,
+        list_position: 1,
+      }]});
 
       this.selectedEvent = arg.event;
       this.selectedElement = arg.nativeEvent.target;
@@ -349,12 +392,13 @@ export default class Calendar extends Vue {
 
   public async updateRange(arg: {start: CalDate, end: CalDate}) {
     await this.loadProducts();
-    this.monthList = getMonths(this.prods);
+    const curmonth = moment().month();
+    this.monthList = getMonths(this.prods).filter((m) => m >= curmonth);
 
-    const current = moment().add(1, 'hour');
+    const current = moment().add(Number(process.env.VUE_APP_TRIP_REMOVAL_MINS) || 60, 'minutes');
 
-    const min = moment(new Date(`${arg.start.date}T00:00:00`));
-    const max = moment(new Date(`${arg.end.date}T23:59:59`));
+    const min = moment(new Date(`${arg.start.date}T00:00:00`)).tz('America/New_York', true);
+    const max = moment(new Date(`${arg.end.date}T23:59:59`)).tz('America/New_York', true);
 
     const curSold = await this.getSold({from: min, to: max});
     const sold: Map<string, ScheduleSold> = new Map();
@@ -363,7 +407,7 @@ export default class Calendar extends Vue {
     }
 
     const events = getEvents(min, max, this.prods, sold, await this.getOverrides({from: min, to: max})).filter((e) => {
-      const start = moment(e.start, 'YYYY-MM-DD H:mm');
+      const start = moment(e.start, 'YYYY-MM-DD H:mm').tz('America/New_York', true);
       return !start.isSameOrBefore(current) && !start.isAfter(max);
     });
 
@@ -389,4 +433,7 @@ export default class Calendar extends Vue {
 
 .v-calendar-weekly__week
   min-height 150px
+
+.v-calendar-weekly__head-weekday
+  font-weight 500
 </style>

@@ -7,3 +7,4 @@ $material-light: (
     'line-color': map-get($grey, 'darken-2'),
   ),
 );
+$calendar-weekly-weekday-font-size: var(--cal-weekday-label) !default;

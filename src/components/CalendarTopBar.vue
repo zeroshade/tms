@@ -40,8 +40,10 @@
         <v-container fluid class="mt-2">
           <v-row dense justify="center">
             <v-col v-for='(d, idx) in months' :key='`col-${idx}`'>
-              <v-btn class='mr-1 ml-1'
-                small rounded
+              <v-btn
+                :small='width >= 350'
+                :x-small='width < 350'
+                rounded
                 color='primary'
                 :key='`mo-${idx}`'
                 @click='$emit("click:month", d.getMonth()+1)'
@@ -76,6 +78,12 @@ export default class CalendarBar extends Vue {
     'day': 'Day',
     '4day': '4 Days',
   };
+
+  private width = screen.width;
+
+  public created() {
+    window.onresize = (ev: UIEvent) => { this.width = screen.width; };
+  }
 
   public get orientation(): string {
     if (screen.orientation) {

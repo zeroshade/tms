@@ -25,6 +25,7 @@ export enum Fish {
   SeaBassCod = 'seabasscod',
   SeaBassPorgie = 'seabassporgies',
   Fourth = 'fourth',
+  BlackFish = 'tautog',
 }
 
 export const FishToImg: {[key in Fish]: {img: string, height: number, width: number}} = {
@@ -42,6 +43,7 @@ export const FishToImg: {[key in Fish]: {img: string, height: number, width: num
   'seabasscod': { img: 'seabass-cod.png', width: 90, height: 39 },
   'seabassporgies': { img: 'seabass-porgies.png', width: 90, height: 50 },
   'fourth': { img: '4th-stretched.png', width: 90, height: 50 },
+  'tautog': { img: 'tautog.png', width: 80, height: 42 },
 };
 
 export interface ScheduleTime {
@@ -119,6 +121,10 @@ export function deleteBoatReq(boat: Boat): Request {
   });
 }
 
+export function getProdInfoReq(id: number): Request {
+  return new Request(BASEURL + `/product/${id}`);
+}
+
 export function getProductsReq(): Request {
   return new Request(BASEURL + '/');
 }
@@ -130,9 +136,9 @@ export function putProduct(p: Product): Request {
     p.id = 0;
   }
   for (const s of p.schedList) {
-    s.start = moment(s.start).format('MM-DD');
-    s.end = moment(s.end).format('MM-DD');
-    s.notAvailArray = s.notAvailArray.map((n) => moment(n).format('MM-DD'));
+    s.start = moment(s.start).format('YYYY-MM-DD');
+    s.end = moment(s.end).format('YYYY-MM-DD');
+    s.notAvailArray = s.notAvailArray.map((n) => moment(n).format('YYYY-MM-DD'));
   }
   return new Request(BASEURL + '/product', {
     method: 'PUT',

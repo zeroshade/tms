@@ -3,12 +3,20 @@
     :return-value.sync='saved'
     large
     persistent
-    @open='saved = value; $emit("open")'
+    @open='onOpen()'
     @save='saved ? $emit("input", isnum ? Number(saved).toFixed(2) : saved) && $emit("save") : $emit("cancel")'
     @cancel='$emit("cancel")'
     @close='$emit("close")'
-  ><span :class='valclass'>{{ prefix }}{{ isnum ? Number(value).toFixed(2) : value }}</span>
-  <v-text-field slot='input'
+  ><span :class='valclass'>{{ isnum ? Number(value || 0).toFixed(2) : value || '' }}</span>
+  <v-text-field v-if='!useMask'
+    slot='input'
+    :rules='rules'
+    v-model='saved'
+    :prefix='usePrefix'
+    :type='isnum ? "number" : "text"'
+    :label='label' single-line counter />
+  <v-text-field v-else
+    slot='input'
     :rules='rules'
     v-model='saved'
     :prefix='usePrefix'
@@ -19,7 +27,7 @@
 </template>
 
 <script lang='ts'>
-import { Component, Prop, PropSync, Vue } from 'vue-property-decorator';
+import { Component, Prop, PropSync, Vue, Emit } from 'vue-property-decorator';
 import { mask } from '@titou10/v-mask';
 
 interface Mask {
@@ -83,7 +91,16 @@ export default class InlineEdit extends Vue {
     return this.formatNum;
   }
 
-  public saved = '';
+  public saved: string | number = '';
   public unmask = '';
+
+  @Emit('open')
+  public onOpen() {
+    if (this.value) {
+      this.saved = this.value;
+    } else {
+      this.saved = this.formatNum ? 0 : '';
+    }
+  }
 }
 </script>

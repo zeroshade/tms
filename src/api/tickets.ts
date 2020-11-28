@@ -17,6 +17,12 @@ export function deleteCategoryReq(id: number): Request {
   });
 }
 
+export function getCatInfoReq(id: number): Request {
+  return new Request(BASEURL + `/tickets/${id}`, {
+    method: 'GET',
+  });
+}
+
 export function getCategoriesReq(): Request {
   return new Request(BASEURL + '/tickets', {
     method: 'GET',

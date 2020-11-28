@@ -1,7 +1,7 @@
 <template>
   <v-navigation-drawer
     v-model='sync'
-    mobile-break-point='600'
+    mobile-breakpoint='500'
     app
     class='d-print-none'>
     <v-toolbar flat>
@@ -21,6 +21,15 @@
         </v-list-item-action>
         <v-list-item-content>
           <v-list-item-title>Home</v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
+
+      <v-list-item v-if='isAdmin' exact :to='{name: "logs"}'>
+        <v-list-item-action>
+          <v-icon>dynamic_feed</v-icon>
+        </v-list-item-action>
+        <v-list-item-content>
+          <v-list-item-title>Logs</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
 
@@ -62,12 +71,12 @@
         <v-list-item :to="{name: 'ticketprice'}">
           <v-list-item-title>Edit Price Categories</v-list-item-title>
         </v-list-item>
-        <v-list-item :to="{name: 'edittickets'}">
+        <v-list-item :to="{name: 'edittickets'}" v-if='flags.hasTicketLeft'>
           <v-list-item-title>Edit Tickets Available</v-list-item-title>
         </v-list-item>
       </v-list-group>
 
-      <v-list-group no-action prepend-icon="assignment" value="true">
+      <v-list-group no-action prepend-icon="assignment" value="true" v-if='flags.hasReports'>
         <template v-slot:activator>
           <v-list-item>
             <v-list-item-title>Reports</v-list-item-title>
@@ -94,11 +103,21 @@
 </template>
 
 <script lang='ts'>
-import { Component, Vue, Prop, PropSync } from 'vue-property-decorator';
+import { Component, Vue, Prop, PropSync, Inject } from 'vue-property-decorator';
+import { Getter } from 'vuex-class';
+import { User } from '@/api/users';
 
 @Component
 export default class NavBar extends Vue {
   @PropSync('show', { type: Boolean }) public sync!: boolean;
   @Prop(Function) public logout!: (o?: any) => void;
+  @Inject() public readonly flags!: object;
+  @Getter('auth/user') public readonly self!: User | null;
+
+  public get isAdmin(): boolean {
+    if (!this.self) { return false; }
+    const roles: string[] | undefined = this.self['https://interface.ticketmgmt.dev/role'];
+    return roles?.findIndex((r) => r === 'admin') !== -1;
+  }
 }
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <v-dialog max-width='660px' :value='value' @input='$emit("input", $event)'>
+  <v-dialog max-width='750px' :value='value' @input='$emit("input", $event)'>
     <v-card v-if='event'
       color='grey lighten-4'
       min-width='600px'
@@ -14,7 +14,7 @@
         <img v-else-if='flags.useFish && event.fish === "seabassfluke"' src='@/assets/seabassfluke.png' height='50px' :aspect-ratio='1.77' />
         <img v-else-if='flags.useFish && event.fish === "striper"' src='@/assets/striper.png' height='50px' :aspect-ratio='2.2' />
         <v-spacer />
-        {{ [event.start, 'YYYY-MM-DD H:mm'] | moment('ddd, MMM Do') }}
+        {{ [event.start, 'YYYY-MM-DD H:mm'] | moment('ddd, MMM Do YYYY') }}
       </v-toolbar>
       <v-card-subtitle class='d-flex justify-space-between mt-1 subtitle-1'>
         <span><strong>Start Time: </strong> {{ [event.start, 'YYYY-MM-DD H:mm'] | moment('h:mm A') }}</span>
@@ -38,7 +38,7 @@
           <v-container>
             <template v-for='p in prices'>
               <v-row :key='p.name' dense no-gutters>
-                <v-col cols='1'><strong>{{p.name|capitalize}}:</strong></v-col>
+                <v-col cols='1' class='mr-1'><strong>{{p.name|capitalize}}:</strong></v-col>
                 <v-col cols='2'>{{p.price|money}}/ea.</v-col>
                 <v-col cols='4'>
                   <v-btn v-if='allincart >= event.avail' class='mb-3' color='red' x-small text>Can't Add More</v-btn>
@@ -53,7 +53,7 @@
                   </span>
                   <v-btn v-else class='mb-3' x-small outlined>Sold Out</v-btn>
                 </v-col>
-                <v-col cols='4'>
+                <v-col cols='3'>
                   <span v-if='incart[p.name]' class='text-uppercase body-2 ml-n2 font-weight-black'>
                     In Cart: {{ incart[p.name] }} Total: {{ p.price * incart[p.name] | money }}
                   </span>
@@ -111,7 +111,7 @@ import { Component, Vue, Prop, Inject } from 'vue-property-decorator';
 import { EventInfo, Boat } from '@/api/product';
 import { Getter, Mutation } from 'vuex-class';
 import TicketCategory, { CartItem } from '@/api/tickets';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { Item } from '@/api/paypal';
 import { itemToGtag } from '@/api/gtag';
 
@@ -159,6 +159,9 @@ export default class EventView extends Vue {
       const p = Number(prices.categories[cat]);
       if (p > 0) {
         ret.push({name: cat, price: p});
+        if (!(cat in this.qty)) {
+          this.qty[cat] = '0';
+        }
       }
     }
     return ret;
@@ -166,7 +169,7 @@ export default class EventView extends Vue {
 
   public get incart(): {[name: string]: number} {
     if (this.event === null) { return {}; }
-    const start = moment(this.event.start, 'YYYY-MM-DD H:mm');
+    const start = moment(this.event.start, 'YYYY-MM-DD H:mm').tz('America/New_York', true);
 
     const ret: {[name: string]: number} = {};
     for (const p of this.prices) {
@@ -186,7 +189,7 @@ export default class EventView extends Vue {
   }
 
   public createItem(type: string, price: number): Item {
-    const start = moment(this.event!.start, 'YYYY-MM-DD H:mm');
+    const start = moment(this.event!.start, 'YYYY-MM-DD H:mm').tz('America/New_York', true);
     const desc = this.event!.name + ', ' + start.format('M/D/Y, h:mm A');
     return {
       sku: this.event!.id.toString() + type.toUpperCase() + String(start.unix()),
