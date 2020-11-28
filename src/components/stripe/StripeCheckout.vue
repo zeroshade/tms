@@ -22,8 +22,8 @@ export default class CheckoutStripe extends Vue {
   @Prop({type: Array, required: true}) public readonly items!: Item[];
   @Action('cart/createStripeSession') public readonly createSession!: (itemList: Item[]) => Promise<{id: string}>;
 
-  public publishableKey = 'pk_test_51HW5IMCRvgenAM4zZZSau4eoCSBFuZXbTKWWf1Zz4AyfbovoWBDDsBCIBRYyJ6NLrHxIdb58JmVpa3QS6KGuo4ZA0044yONzUA';
-  public stripeAccount = 'acct_1HYb0OGCb1vztKLC';
+  public publishableKey = process.env.VUE_APP_STRIPE_PUBLISH_KEY || '';
+  // public stripeAccount = 'acct_1HYb0OGCb1vztKLC';
   public stripe: StripeObj | null = null;
 
   public async mounted() {
@@ -32,7 +32,8 @@ export default class CheckoutStripe extends Vue {
   }
 
   public createButton() {
-    this.stripe = Stripe(this.publishableKey, {stripeAccount: this.stripeAccount});
+    // this.stripe = Stripe(this.publishableKey, {stripeAccount: this.stripeAccount});
+    this.stripe = Stripe(this.publishableKey, {});
   }
 
   public async doCheckout() {
