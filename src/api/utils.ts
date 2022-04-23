@@ -12,11 +12,23 @@ export enum PaymentHandler {
   STRIPE = 'STRIPE',
 }
 
+export interface AdminFeatureFlags {
+  readonly useFish: boolean;
+  readonly hasTicketLeft: boolean;
+  readonly reportAutoDate: boolean;
+  readonly hasReports: boolean;
+  readonly refunds: boolean;
+  readonly hasHelp: boolean;
+}
+
 export interface CalFeatureFlags {
   readonly todayBtn: boolean;
   readonly bgcolor: string;
+  readonly calColorProp: string;
+  readonly calDayBtnColor: string;
   readonly cartBtn: boolean;
   readonly monthViewOnly: boolean;
+  readonly showFooter: boolean;
   readonly outsideBg: string;
   readonly weekdayLabelSize: string;
   readonly useFish: boolean;
@@ -24,9 +36,12 @@ export interface CalFeatureFlags {
   readonly verticalPaypal: boolean;
   readonly customCheckout: string;
   readonly paymentHandler: PaymentHandler;
+  readonly boatFilterID: number | null;
+  readonly showSoldOutOverride: boolean;
+  readonly mobileTable: boolean;
 }
 
-function timeToMoment(day: moment.Moment, time: string): moment.Moment {
+export function timeToMoment(day: moment.Moment, time: string): moment.Moment {
   const [h, m] = time.split(':');
   return day.clone().hour(Number(h)).minute(Number(m)).second(0);
 }
@@ -38,6 +53,10 @@ export function getMonths(prods: Product[]): number[] {
     for (const sc of p.schedList) {
       const s = moment(sc.start);
       const e = moment(sc.end);
+
+      if (s.year() !== today.year() && e.year() !== today.year()) {
+        continue;
+      }
 
       const schedRange = range(s, e).snapTo('month');
       const idx = ranges.findIndex((r) => {
@@ -68,7 +87,7 @@ export function getMonths(prods: Product[]): number[] {
 
 export function getEvents(start: moment.Moment, end: moment.Moment,
                           prods: Product[], sold: Map<string, ScheduleSold> | null,
-                          overrides: ManualOverride[] | null): EventInfo[] {
+                          overrides: ManualOverride[] | null, includeUnpub: boolean = false): EventInfo[] {
   const events: EventInfo[] = [];
 
   const overrideMap = new Map<string, ManualOverride>();
@@ -79,7 +98,7 @@ export function getEvents(start: moment.Moment, end: moment.Moment,
     }
   }
 
-  for (const p of prods.filter((pr) => pr.publish)) {
+  for (const p of prods.filter((pr) => includeUnpub || pr.publish)) {
     const timeRange = range(start, end.clone().add(1, 'd'));
     for (const d of timeRange.by('day')) {
       for (const sc of p.schedList) {

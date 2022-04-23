@@ -1,8 +1,8 @@
 <template>
-  <v-dialog max-width='750px' :value='value' @input='$emit("input", $event)'>
+  <v-dialog :fullscreen='$vuetify.breakpoint.mobile' max-width='750px' :value='value' @input='$emit("input", $event)'>
     <v-card v-if='event'
       color='grey lighten-4'
-      min-width='600px'
+      :min-width='($vuetify.breakpoint.mobile) ? undefined : "600px"'
       flat>
       <v-toolbar :color='event.color' dark>
         <v-toolbar-title v-html='event.name' />
@@ -26,7 +26,9 @@
             <strong>Boat:</strong> {{ getBoat(event.boatId).name }}
           </v-col>
           <v-col class='text-right'>
-            <strong>Tickets Available:</strong> {{ event.avail }}
+            <span v-if='event.showTickets'>
+              <strong>Tickets Available:</strong> {{ event.avail }}
+            </span>
           </v-col>
         </v-row>
         <span>
@@ -38,9 +40,9 @@
           <v-container>
             <template v-for='p in prices'>
               <v-row :key='p.name' dense no-gutters>
-                <v-col cols='1' class='mr-1'><strong>{{p.name|capitalize}}:</strong></v-col>
-                <v-col cols='2'>{{p.price|money}}/ea.</v-col>
-                <v-col cols='4'>
+                <v-col cols='2' lg='1' md='1' sm='2' class='mr-1'><strong>{{p.name|capitalize}}:</strong></v-col>
+                <v-col cols='3' lg='2' md='2' sm='3'>{{p.price|money}}/ea.</v-col>
+                <v-col cols='6' lg='4' md='4' sm='6'>
                   <v-btn v-if='allincart >= event.avail' class='mb-3' color='red' x-small text>Can't Add More</v-btn>
                   <span v-else-if='event.avail > 0' class='mb-3'>
                     <v-select
@@ -53,12 +55,12 @@
                   </span>
                   <v-btn v-else class='mb-3' x-small outlined>Sold Out</v-btn>
                 </v-col>
-                <v-col cols='3'>
+                <v-col cols='10' lg='3' md='3' sm='10'>
                   <span v-if='incart[p.name]' class='text-uppercase body-2 ml-n2 font-weight-black'>
                     In Cart: {{ incart[p.name] }} Total: {{ p.price * incart[p.name] | money }}
                   </span>
                 </v-col>
-                <v-col cols='1'>
+                <v-col cols='1' md='1' lg='1'>
                   <v-tooltip v-if='incart[p.name]' top>
                     <template v-slot:activator='{ on }'>
                       <v-btn medium class='mt-n2' @click='remove(p)' text icon v-on='on'>

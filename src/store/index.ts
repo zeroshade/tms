@@ -34,6 +34,8 @@ export interface Orders {
   payerId?: string;
   paymentId?: string;
   status: string;
+  phone?: string;
+  created: string;
 }
 
 export default new Vuex.Store<RootState>({

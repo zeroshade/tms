@@ -68,6 +68,7 @@
         <p v-if='flags.verticalPaypal' class='subtitle-2'>Choose Your Payment Method</p>
           <v-spacer v-if='!flags.verticalPaypal' />
           <checkout-stripe v-if='flags.paymentHandler === "STRIPE"'
+            @redeemed:success='redeemed()'
             :items='items.filter((i) => i.item.quantity > 0).map((i) => i.item)'
           />
           <paypal-checkout v-if='flags.paymentHandler === "PAYPAL"'
@@ -226,7 +227,7 @@ export default class Cart extends Vue {
   }
 
   public readonly style = {
-    label: BtnLabel.PAYPAL,
+    label: BtnLabel.BUYNOW,
     layout: this.flags.verticalPaypal ? BtnLayout.VERTICAL : BtnLayout.HORIZONTAL,
     tagline: false,
   };
@@ -337,6 +338,11 @@ export default class Cart extends Vue {
       checkout_step: 2,
     });
     this.sync = false;
+  }
+
+  @Emit('redeemed-success')
+  public redeemed() {
+    this.emptyCart();
   }
 
   @Emit('checkout-success')

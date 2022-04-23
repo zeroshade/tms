@@ -12,6 +12,9 @@ const authGuard = async (to: Route, from: Route, next: nextfunc ): Promise<void>
 
   const fn = () => {
     if (auth.isAuthenticated) {
+      if (to.path != '/admin/product/orders' && auth.user[process.env.VUE_APP_AUTH0_CLAIM_NAMESPACE + 'role']?.includes('Crew')) {        
+        return next('/admin/product/orders')
+      }
       return next();
     }
 
@@ -120,6 +123,12 @@ export default new Router({
       name: 'logs',
       beforeEnter: authGuard,
       component: () => import(/* webpackChunkName: "logs" */ '@/views/LogData.vue'),
+    },
+    {
+      path: '/admin/tickets/manual',
+      name: 'manualentry',
+      beforeEnter: authGuard,
+      component: () => import(/* webpackChunkName: "tickets" */ '@/views/tickets/ManualEntry.vue'),
     },
   ],
 });

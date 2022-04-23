@@ -33,9 +33,9 @@
         </v-list-item-content>
       </v-list-item>
 
-      <v-list-group no-action prepend-icon='directions_boat' value='true'>
+      <v-list-group :disabled='isCrew' no-action prepend-icon='directions_boat' value="true">
         <template v-slot:activator>
-          <v-list-item>
+          <v-list-item :disabled='isCrew'>
             <v-list-item-title>Product List</v-list-item-title>
           </v-list-item>
         </template>
@@ -48,9 +48,9 @@
 
       </v-list-group>
 
-      <v-list-group no-action prepend-icon="person" value='true'>
+      <v-list-group :disabled='isCrew' no-action prepend-icon="person" value="true">
         <template v-slot:activator>
-          <v-list-item>
+          <v-list-item :disabled='isCrew'>
             <v-list-item-title>Users</v-list-item-title>
           </v-list-item>
         </template>
@@ -62,9 +62,9 @@
         </v-list-item>
       </v-list-group>
 
-      <v-list-group no-action prepend-icon="confirmation_number" value="true">
+      <v-list-group :disabled='isCrew' no-action prepend-icon="confirmation_number" value="true">
         <template v-slot:activator>
-          <v-list-item>
+          <v-list-item :disabled='isCrew'>
             <v-list-item-title>Tickets</v-list-item-title>
           </v-list-item>
         </template>
@@ -74,11 +74,14 @@
         <v-list-item :to="{name: 'edittickets'}" v-if='flags.hasTicketLeft'>
           <v-list-item-title>Edit Tickets Available</v-list-item-title>
         </v-list-item>
+        <v-list-item :to="{name: 'manualentry'}">
+          <v-list-item-title>Manual Ticket Entry</v-list-item-title>
+        </v-list-item>
       </v-list-group>
 
-      <v-list-group no-action prepend-icon="assignment" value="true" v-if='flags.hasReports'>
+      <v-list-group :disabled='isCrew' no-action prepend-icon="assignment" value="true" v-if='flags.hasReports'>
         <template v-slot:activator>
-          <v-list-item>
+          <v-list-item :disabled='isCrew'>
             <v-list-item-title>Reports</v-list-item-title>
           </v-list-item>
         </template>
@@ -87,14 +90,18 @@
         </v-list-item>
       </v-list-group>
 
-      <v-list-group no-action prepend-icon="settings_applications" value="true">
+      <v-list-group :disabled='isCrew' no-action prepend-icon="settings_applications" value="true">
         <template v-slot:activator>
-          <v-list-item>
+          <v-list-item :disabled='isCrew'>
             <v-list-item-title>Config</v-list-item-title>
           </v-list-item>
         </template>
         <v-list-item :to="{name: 'config'}">
           <v-list-item-title>Edit Config</v-list-item-title>
+        </v-list-item>
+        <v-list-item v-if='flags.hasHelp' href='/help.htm' target='_blank'>
+          <v-list-item-title>Help</v-list-item-title>
+          <v-list-item-icon><v-icon>help_outline</v-icon></v-list-item-icon>
         </v-list-item>
       </v-list-group>
     </v-list>
@@ -113,6 +120,12 @@ export default class NavBar extends Vue {
   @Prop(Function) public logout!: (o?: any) => void;
   @Inject() public readonly flags!: object;
   @Getter('auth/user') public readonly self!: User | null;
+
+  public get isCrew(): boolean {
+    if (!this.self) { return false; }
+    const roles: string[] | undefined = this.self['https://interface.ticketmgmt.dev/role'];
+    return roles?.findIndex((r) => r === 'Crew') !== -1;
+  }
 
   public get isAdmin(): boolean {
     if (!this.self) { return false; }

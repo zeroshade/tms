@@ -18,7 +18,7 @@
       </v-badge>
       <v-spacer />
 
-      <v-menu bottom right offset-y v-if='!flags.monthViewOnly'>
+      <v-menu bottom right offset-y v-if='!$vuetify.breakpoint.mobile && !flags.monthViewOnly'>
         <template v-slot:activator='{on}'>
           <v-btn class='mr-2' outlined color='grey darken-2' v-on='on'>
             <span>{{typeToLabel[type]}}</span>
@@ -37,7 +37,7 @@
       </v-btn>
 
       <template v-slot:extension>
-        <v-container fluid class="mt-2">
+        <v-container fluid class="mt-2" v-if='!flags.mobileTable || !$vuetify.breakpoint.mobile'>
           <v-row dense justify="center">
             <v-col v-for='(d, idx) in months' :key='`col-${idx}`'>
               <v-btn
@@ -53,6 +53,21 @@
             </v-col>
           </v-row>
         </v-container>
+        <v-menu v-else bottom right offset-y>
+          <template v-slot:activator='{on}'>
+            <v-btn class='mr-2' outlined color='grey darken-2' v-on='on'>
+              <span>Months</span><v-icon right>keyboard_arrow_down</v-icon>
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item v-for='(d, idx) in months' :key='`col-${idx}`' @click='$emit("click:month", d.getMonth()+1)'>
+              <v-list-item-icon><v-icon v-if='d.getMonth()+1 === curMonth'>done</v-icon></v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>{{d|moment('MMMM')}}</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </v-menu>
       </template>
     </v-toolbar>
   </v-sheet>

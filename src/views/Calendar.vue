@@ -2,7 +2,11 @@
   <v-app :style='{
       "--bg-color": `#${flags.bgcolor}`,
       "--cal-outside-bg": `#${flags.outsideBg}`,
-      "--cal-weekday-label": `${flags.weekdayLabelSize}`
+      "--cal-weekday-label": `${flags.weekdayLabelSize}`,
+      "--day-button-color": `#${flags.calDayBtnColor}`,
+      "--cal-present-button": `#${flags.calColorProp}`,
+      "--footer-border": flags.showFooter ? `#616161 1px solid` : `0px` ,
+      "--last-border": flags.showFooter ? `0px` : `1px`
     }'>
     <v-container fluid>
       <v-row class='fill-height'>
@@ -19,8 +23,33 @@
             :type='type'
           />
 
+          <v-sheet outlined elevation='5'>
+          <v-data-table
+            dense
+            disable-pagination
+            hide-default-footer
+            hide-default-header
+            v-if='flags.mobileTable && events.length > 0 && $vuetify.breakpoint.mobile'
+            item-key='start'
+            :items='events'
+            group-by='start'
+            :custom-group='customGroup'
+            :headers='[{text: "", sortable: false, value: "name"}]'>
+
+            <template v-slot:group.header='{group}'>
+              <td>{{group}}</td>
+            </template>
+
+            <template v-slot:item='{item}'>
+              <tr class='eventlist' @click='showEvent({nativeEvent: $event, event: item})'>
+                <td><event :type='type' :event='item' /></td>
+              </tr>
+            </template>
+          </v-data-table>
+          </v-sheet>
           <!-- <v-sheet :height='calendarHeight'> -->
-            <v-calendar
+            <v-calendar              
+              :class='(flags.mobileTable && $vuetify.breakpoint.mobile) ? "d-none" : ""'
               ref='calendar'
               v-model='focus'
               color='primary'
@@ -41,7 +70,7 @@
               @click:more='viewDay'
               @change='updateRange'>
 
-              <template v-slot:day-label='{day, month}'>
+              <template v-slot:day-label='{month}'>
                 <template v-if='start && start.month !== month'>
                   <br /> <!-- hide pre and post dates -->
                 </template>
@@ -61,6 +90,7 @@
       </v-row>
     </v-container>
     <cart :show.sync='showCart' @paypal-approved='finalize = true'
+      @redeemed-success='redeemed()'
       @checkout-error='finalize = false; showCart = true'
       @checkout-success='checkedOut($event)' @checkout-cancelled='finalize = false' />
     <v-dialog persistent width='350' v-model='finalize'>
@@ -139,7 +169,7 @@ function toBool(arg: string | boolean): boolean {
 })
 export default class Calendar extends Vue {
   @Getter('cart/total') public readonly total!: number;
-  @Getter('product/products') public prods!: Product[];
+  @Getter('product/products') public prodlist!: Product[];
   @Mutation('logError') public logErr!: (err: any) => void;
   @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Action('tickets/getSold') public getSold!: (payload: {from: moment.Moment, to: moment.Moment})
@@ -152,8 +182,11 @@ export default class Calendar extends Vue {
   @Provide() public readonly flags: CalFeatureFlags = {
     todayBtn: toBool(process.env.VUE_APP_TODAY || true),
     bgcolor: process.env.VUE_APP_CALENDAR_BG || 'FFFFFF',
+    calColorProp: process.env.VUE_APP_CALENDAR_COLOR_PROP || 'primary',
+    calDayBtnColor: process.env.VUE_APP_CALENDAR_BTN_COLOR || '000',
     cartBtn: toBool(process.env.VUE_APP_CART_BTN || true),
     monthViewOnly: toBool(process.env.VUE_APP_MONTH_ONLY || false),
+    showFooter: toBool(process.env.VUE_APP_CALENDAR_SHOW_FOOTER || false),
     outsideBg: process.env.VUE_APP_CALENDAR_OUTSIDE_BG || 'F7F7F7',
     weekdayLabelSize: process.env.VUE_APP_CALENDAR_WEEKDAY_SIZE || '11px',
     useFish: toBool(process.env.VUE_APP_USE_FISH || false),
@@ -162,6 +195,9 @@ export default class Calendar extends Vue {
     customCheckout: process.env.VUE_APP_CUSTOM_POST_CHECKOUT || 'basic-checked-out',
     paymentHandler: process.env.VUE_APP_PAYMENT_HANDLER ?
       process.env.VUE_APP_PAYMENT_HANDLER as PaymentHandler : PaymentHandler.PAYPAL,
+    boatFilterID: Number(process.env.VUE_APP_BOAT_FILTER) || null,
+    showSoldOutOverride: toBool(process.env.VUE_APP_SHOW_SOLD_OUT || false),
+    mobileTable: toBool(process.env.VUE_APP_MOBILE_TABLE || false),
   };
 
   public readonly calendarHeight = process.env.VUE_APP_CALENDAR_HEIGHT;
@@ -214,14 +250,43 @@ export default class Calendar extends Vue {
     this.focus = this.today;
   }
 
+  public customGroup(items: EventInfo[], groupBy: string[]): Array<{name: string, items: EventInfo[]}> {
+    const dm = new Map<string, EventInfo[]>();
+    for (const i of items) {
+      const start = moment(i.start, 'YYYY-MM-DD H:mm').tz('America/New_York', true);
+      const key = start.format('dddd, MMM Do, YYYY');
+      if (dm.has(key)) {
+        dm.get(key)!.push(i);
+      } else {
+        dm.set(key, [i]);
+      }
+    }
+
+    const ret: Array<{name: string, items: EventInfo[]}> = [];
+    for (const [k, v] of dm.entries()) {
+      ret.push({name: k, items: v.sort((a, b) => a.startTime < b.startTime ? -1 : a.startTime > b.startTime ? 1 : 0)});
+    }
+    return ret;
+  }
+
   public async mounted() {
     this.calendar.checkChange();
 
-    if (window.location.search.includes('stripe_session_id=')) {
-      const params = new URLSearchParams(window.location.search.substring(1));
+    if (this.flags.showFooter) {
+      this.$nextTick(() => {
+        const cln = document.getElementsByClassName('v-calendar-weekly__head')[0].cloneNode(true);
+        (cln as HTMLDivElement).classList.add('d-none');
+        document.getElementsByClassName('v-calendar-monthly')[0].appendChild(cln);
+      });
+    }
+
+    const loc = (window !== parent) ? window.parent.location : window.location;
+
+    if (loc.search.includes('stripe_session_id=')) {
+      const params = new URLSearchParams(loc.search.substring(1));
       const stripeSession = params.get('stripe_session_id')!;
       const status = params.get('status');
-      window.history.replaceState({}, document.title, window.location.href.split('?')[0]);
+      window.history.replaceState({}, document.title, loc.href.split('?')[0]);
 
       const resp = await this.getStripeSession(stripeSession);
       const sess: StripeSession = await resp.json();
@@ -242,6 +307,20 @@ export default class Calendar extends Vue {
         this.success = true;
       }
     }
+  }
+
+  public redeemed() {
+    this.order = {
+      create_time: '',
+      intent: 'payment',
+      id: '',
+      links: [],
+      status: 'success',
+      update_time: '',
+      purchase_units: [],
+      payer: {email_address: '', name: {given_name: '', surname: ''} },
+    };
+    this.success = true;
   }
 
   public setMonth(month: number) {
@@ -273,6 +352,14 @@ export default class Calendar extends Vue {
     return Math.min(...this.events.map((e) => moment(e.start, 'YYYY-MM-DD H:mm').hour())) - 1;
   }
 
+  public get prods(): Product[] {
+    if (this.flags.boatFilterID !== null) {
+      return this.prodlist.filter((p) => p.boatId === this.flags.boatFilterID);
+    }
+
+    return this.prodlist;
+  }
+
   public showIntervalLabel(arg: CalDate): boolean {
     return arg.hour > this.firstInterval;
   }
@@ -286,9 +373,13 @@ export default class Calendar extends Vue {
     return '';
   }
 
-  public showEvent(arg: {nativeEvent: Event, event: EventInfo}) {
+  public showEventTable(ev: EventInfo) {
+    this.showEvent({event: ev});
+  }
+
+  public showEvent(arg: {nativeEvent?: Event, event: EventInfo}) {
     if (arg.event.cancelled) {
-      arg.nativeEvent.stopPropagation();
+      arg.nativeEvent!.stopPropagation();
       return;
     }
 
@@ -325,7 +416,7 @@ export default class Calendar extends Vue {
       }]});
 
       this.selectedEvent = arg.event;
-      this.selectedElement = arg.nativeEvent.target;
+      this.selectedElement = arg.nativeEvent!.target;
       setTimeout(() => this.selectedOpen = true, 10);
     };
 
@@ -336,7 +427,7 @@ export default class Calendar extends Vue {
       open();
     }
 
-    arg.nativeEvent.stopPropagation();
+    arg.nativeEvent!.stopPropagation();
   }
 
   public get title(): string {
@@ -414,6 +505,18 @@ export default class Calendar extends Vue {
     this.start = arg.start;
     this.end = arg.end;
     this.events = events;
+
+    if (this.flags.showFooter) {
+      const footer = document.getElementsByClassName('v-calendar-weekly__head')[1];
+      footer.childNodes.forEach((v, idx) => {
+        if (idx <= arg.end.weekday) {
+          (v as HTMLDivElement).classList.remove('v-outside');
+        } else {
+          (v as HTMLDivElement).classList.add('v-outside');
+        }
+      });
+      (footer as HTMLDivElement).classList.remove('d-none');
+    }
   }
 }
 
@@ -436,4 +539,23 @@ export default class Calendar extends Vue {
 
 .v-calendar-weekly__head-weekday
   font-weight 500
+
+.v-calendar-weekly__day-label .v-btn
+  color: var(--day-button-color)
+
+.v-present .v-calendar-weekly__day-label .v-btn:before
+  background-color: var(--cal-present-button) !important
+
+.v-present .v-calendar-weekly__day-label .v-btn
+  background-color: var(--cal-present-button) !important
+
+.v-calendar-weekly__day:not(.v-present) .v-calendar-weekly__day-label .v-btn__content
+  color: #000
+
+.v-calendar-weekly__week:nth-last-child(2) .v-calendar-weekly__day
+  border-bottom-width: var(--last-border)
+
+div.v-calendar-weekly__head:last-of-type .v-calendar-weekly__head-weekday
+  border-bottom: var(--footer-border)
+
 </style>

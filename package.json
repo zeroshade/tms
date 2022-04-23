@@ -6,10 +6,14 @@
     "serve": "vue-cli-service serve",
     "serve:lauralee": "vue-cli-service serve --mode lauraleedev",
     "serve:sealwatching": "vue-cli-service serve --mode sealwatching",
+    "serve:princess": "vue-cli-service serve --mode princess",
+    "serve:pride": "vue-cli-service serve --mode pride",
     "build": "vue-cli-service build --skip-plugins pwa,workbox",
     "lint": "vue-cli-service lint",
     "build:lauralee": "vue-cli-service build --mode lauralee --dest dist_lauralee --skip-plugins pwa,workbox --target app",
-    "build:sealwatching": "vue-cli-service build --mode sealwatchingprod --dest dist_sealwatching --skip-plugins pwa,workbox --target app"
+    "build:sealwatching": "vue-cli-service build --mode sealwatchingprod --dest dist_sealwatching --skip-plugins pwa,workbox --target app",
+    "build:princess": "vue-cli-service build --mode princessprod --dest dist_princess --skip-plugins pwa,workbox --target app",
+    "build:pride": "vue-cli-service build --mode prideprod --dest dist_pride --skip-plugins pwa,workbox --target app"
   },
   "dependencies": {
     "@auth0/auth0-spa-js": "^1.10.0",

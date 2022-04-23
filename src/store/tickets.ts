@@ -3,10 +3,11 @@ import { RootState, TicketState } from './states';
 import TicketCategory, {
   CheckoutInfo, getPurchaseItemsReq, deleteCategoryReq, getCategoriesReq,
   saveCategories, ScheduleSold, getCurrSold, getCheckoutIdsReq, saveOverride,
-  ManualOverride, getOverrides, getOverrideRange, getCatInfoReq,
+  ManualOverride, getOverrides, getOverrideRange, getCatInfoReq, ManualEntryReq, manualTicket,
 } from '@/api/tickets';
 import { Item } from '@/api/paypal';
 import moment from 'moment';
+import { redeemGiftCard, Redemption, RefundInfo, refundTickets, TransferReq, transferTickets, validateGiftcard } from '@/api/stripe';
 
 const ticketModule: Module<TicketState, RootState> = {
   namespaced: true,
@@ -94,6 +95,21 @@ const ticketModule: Module<TicketState, RootState> = {
     },
     async getOverrideRange({}, payload: {from: moment.Moment, to: moment.Moment}): Promise<ManualOverride[]> {
       return await getOverrideRange(payload.from, payload.to);
+    },
+    async refundTickets({dispatch}, req: RefundInfo[]): Promise<Response> {
+      return await dispatch('auth/makeAuthReq', refundTickets(req), { root: true });
+    },
+    async transferTickets({dispatch}, req: TransferReq[]): Promise<Response> {
+      return await dispatch('auth/makeAuthReq', transferTickets(req), { root: true });
+    },
+    async validateGiftcard({}, id: string): Promise<Response> {
+      return await fetch(validateGiftcard(id));
+    },
+    async manualEntry({dispatch}, req: ManualEntryReq): Promise<Response> {
+      return await dispatch('auth/makeAuthReq', manualTicket(req), { root: true });
+    },
+    async redeemGiftCard({}, req: Redemption): Promise<Response> {
+      return await fetch(redeemGiftCard(req));
     },
   },
 };

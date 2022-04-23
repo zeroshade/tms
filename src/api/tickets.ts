@@ -154,3 +154,26 @@ export interface CartItem {
   item: Item;
   event: EventInfo;
 }
+
+export interface ManualEntryReq {
+  productId: number;
+  timestamp: string;
+  quantity: number;
+  desc: string;
+  name: string;
+  email: string;
+  phone: string;
+  entry: string;
+  ticket: string;
+}
+
+export function manualTicket(req: ManualEntryReq): Request {
+  return new Request(BASEURL + '/tickets/manual', {
+    method: 'POST',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(req),
+  });
+}

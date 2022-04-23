@@ -3,7 +3,7 @@ import { EventInfo } from '@/api/product';
 import { ShoppingCartState, RootState } from './states';
 import { Item, confirmOrder, resendEmail, sendText, captureOrder } from '@/api/paypal';
 import { CartItem } from '@/api/tickets';
-import { createSession, getSession } from '@/api/stripe';
+import { CreateStripeSessionRequest, createSession, getSession } from '@/api/stripe';
 import moment from 'moment-timezone';
 
 const cartModule: Module<ShoppingCartState, RootState> = {
@@ -78,8 +78,8 @@ const cartModule: Module<ShoppingCartState, RootState> = {
     async sendText({}, payload: {checkoutId: string, phone: string}) {
       await fetch(sendText(payload.checkoutId, payload.phone));
     },
-    async createStripeSession({}, itemList: Item[]): Promise<{id: string}> {
-      const resp = await fetch(createSession(itemList));
+    async createStripeSession({}, req: CreateStripeSessionRequest): Promise<{id: string}> {
+      const resp = await fetch(createSession(req));
       return await resp.json();
     },
     addCartItem({commit, rootGetters}, payload: { ei: EventInfo, date: string }) {

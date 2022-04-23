@@ -10,7 +10,7 @@ const DEFAULT_REDIRECT_CALLBACK = (appstate: any) =>
 export class Auth {
   public loading = true;
   public isAuthenticated = false;
-  public user = {};
+  public user: {[claim: string]: string | string[]} = {};
   public auth0Client: Auth0Client | null = null;
   public popupOpen = false;
   public error: Error | null = null;

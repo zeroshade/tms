@@ -9,6 +9,13 @@ const opts = {
   icons: {
     iconfont: 'md' as const,
   },
+  breakpoint: {
+    thresholds: {
+      xs: 365,
+      sm: 764,
+    },
+    mobileBreakpoint: 764,
+  },
 };
 
 export default new Vuetify(opts);

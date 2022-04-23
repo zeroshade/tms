@@ -19,6 +19,7 @@ export enum Fish {
   StriperSea = 'new-striped-bass',
   SeaBassFluke = 'seabassfluke',
   Striper = 'striper',
+  StriperBlack = 'striperblack',
   OvernightTile = 'overnighttile',
   OvernightCod = 'overnightcod',
   SeaBass22Hr = 'seabass22hours',
@@ -28,7 +29,45 @@ export enum Fish {
   BlackFish = 'tautog',
 }
 
-export const FishToImg: {[key in Fish]: {img: string, height: number, width: number}} = {
+const lauraleeDisplay: {[key in Fish]: string} = {
+  'bluefish': 'Blue Fish',
+  'codfish': 'CodFish',
+  'cod-flounder': 'Cod Flounder',
+  'seabass': 'Seabass',
+  'fluke': 'Fluke',
+  'new-striped-bass': 'Striper Sea',
+  'seabassfluke': 'SeaBassFluke',
+  'striper': 'Striper',
+  'striperblack': 'Black Striper',
+  'overnighttile': 'Overnight Tile',
+  'overnightcod': 'Overnight Cod',
+  'seabass22hours': 'Sea Bass 22hr',
+  'seabasscod': 'SeaBass Cod',
+  'seabassporgies': 'SeaBass Porgie',
+  'fourth': '4th Of July',
+  'tautog': 'BlackFish',
+};
+
+const princessDisplay: {[key in Fish]: string} = {
+  'bluefish': 'Blue Fish',
+  'codfish': 'CodFish',
+  'cod-flounder': 'Cod Flounder',
+  'seabass': 'Seabass',
+  'fluke': 'Fluke',
+  'new-striped-bass': 'Striper Sea',
+  'seabassfluke': 'SeaBassFluke',
+  'striper': 'Striper',
+  'overnighttile': 'SeaBass Blues',
+  'overnightcod': 'Overnight Cod',
+  'striperblack': 'Black Striper',
+  'seabass22hours': 'Tuna',
+  'seabasscod': 'Fluke Sea',
+  'seabassporgies': 'SeaBass Porgie',
+  'fourth': '4th Of July',
+  'tautog': 'BlackFish',
+};
+
+const lauralee: {[key in Fish]: {img: string, height: number, width: number}} = {
   'bluefish': { img: 'bluefish.png', width: 70, height: 27 },
   'codfish': { img: 'codfish.png', width: 90, height: 36 },
   'cod-flounder': { img: 'cod-flounder.png', width: 86, height: 44 },
@@ -44,8 +83,30 @@ export const FishToImg: {[key in Fish]: {img: string, height: number, width: num
   'seabassporgies': { img: 'seabass-porgies.png', width: 90, height: 50 },
   'fourth': { img: '4th-stretched.png', width: 90, height: 50 },
   'tautog': { img: 'tautog.png', width: 80, height: 42 },
+  'striperblack': {img: 'striperblack.png', width: 80, height: 43},
 };
 
+const princess: {[key in Fish]: {img: string, height: number, width: number}} = {
+  'bluefish': { img: 'bluefish.png', width: 70, height: 27 },
+  'codfish': { img: 'codfish.png', width: 90, height: 36 },
+  'cod-flounder': { img: 'cod-flounder.png', width: 86, height: 44 },
+  'seabass': { img: 'sea-bass.png', width: 80, height: 45 },
+  'fluke': { img: 'fluke.png', width: 65, height: 39 },
+  'new-striped-bass': { img: 'striper-seabass.png', width: 65, height: 33 },
+  'seabassfluke': { img: 'fluke-seabass-combo.png', width: 80, height: 45 },
+  'striper': { img: 'stripers.png', width: 90, height: 43 },
+  'overnighttile': { img: 'overnight-tile.png', width: 90, height: 60 },
+  'overnightcod': { img: 'overnight-cod.png', width: 90, height: 39 },
+  'seabass22hours': { img: 'seabass-22hours.png', width: 90, height: 50 },
+  'seabasscod': { img: 'seabass-cod.png', width: 90, height: 39 },
+  'seabassporgies': { img: 'seabass-porgies.png', width: 90, height: 50 },
+  'fourth': { img: '4th-stretched.png', width: 90, height: 50 },
+  'tautog': { img: 'tautog.png', width: 80, height: 42 },
+  'striperblack': {img: 'striperblack.png', width: 80, height: 43},
+};
+
+export const FishToImg = (process.env.VUE_APP_FISHES === 'lauralee') ? lauralee : princess;
+export const FishDisplay = (process.env.VUE_APP_FISHES === 'lauralee') ? lauraleeDisplay : princessDisplay;
 export interface ScheduleTime {
   startTime: string;
   endTime: string;

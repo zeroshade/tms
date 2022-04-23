@@ -14,6 +14,7 @@
 import { Component, Vue, Watch, Provide } from 'vue-property-decorator';
 import NavBar from './components/NavBar.vue';
 import { Action, Getter } from 'vuex-class';
+import { AdminFeatureFlags } from './api/utils';
 
 function toBool(arg: string | boolean): boolean {
   if (typeof arg === 'string') {
@@ -32,11 +33,13 @@ export default class App extends Vue {
   @Action('auth/logout') public logMeOut!: (o?: any) => void;
   @Getter('auth/autherror') public autherror!: Error | null;
   @Getter('auth/authenticated') public readonly authed!: boolean;
-  @Provide() public readonly flags = {
+  @Provide() public readonly flags: AdminFeatureFlags = {
     useFish: toBool(process.env.VUE_APP_USE_FISH || false),
     hasTicketLeft: toBool(process.env.VUE_APP_HAS_TICKET_LEFT || false),
     reportAutoDate: toBool(process.env.VUE_APP_REPORT_AUTO_DATE || true),
     hasReports: toBool(process.env.VUE_APP_USE_REPORTS || false),
+    refunds: toBool(process.env.VUE_APP_HAS_REFUNDS || false),
+    hasHelp: toBool(process.env.VUE_APP_HAS_HELP_LINK || false),
   };
 
   public showNav = true;

@@ -44,19 +44,87 @@ export interface StripeSession {
   payment_intent: StripePaymentIntent;
 }
 
+export interface CreateStripeSessionRequest {
+  items: Item[];
+  name: string;
+  email: string;
+  phone: string;
+  useGift: string;
+}
+
 export function getSession(id: string): Request {
   return new Request(`${BASEURL}/stripe/${id}`);
 }
 
-export function createSession(itemList: Item[]): Request {
+export function createSession(req: CreateStripeSessionRequest): Request {
   return new Request(`${BASEURL}/stripe`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-calendar-origin': window.location.href,
+      'x-calendar-origin': (parent !== window) ? window.parent.location.href : window.location.href,
     },
     mode: 'cors',
     cache: 'no-cache',
-    body: JSON.stringify(itemList),
+    body: JSON.stringify(req),
+  });
+}
+
+export interface RefundInfo {
+  paymentId: string;
+  itemId: string;
+}
+
+export function refundTickets(req: RefundInfo[]): Request {
+  return new Request(`${BASEURL}/refund`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    mode: 'cors',
+    cache: 'no-cache',
+    body: JSON.stringify(req),
+  });
+}
+
+export interface TransferReq {
+  id: string;
+  oldsku: string;
+  newsku: string;
+  newname: string;
+}
+
+export function transferTickets(req: TransferReq[]): Request {
+  return new Request(`${BASEURL}/transfer`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    mode: 'cors',
+    cache: 'no-cache',
+    body: JSON.stringify(req),
+  });
+}
+
+export function validateGiftcard(id: string): Request {
+  return new Request(`${BASEURL}/giftcard/${id}`);
+}
+
+export interface Redemption {
+  giftcard: string;
+  name: string;
+  email: string;
+  phone: string;
+  items: Item[];
+}
+
+export function redeemGiftCard(req: Redemption): Request {
+  return new Request(`${BASEURL}/tickets/redeem`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    mode: 'cors',
+    cache: 'no-cache',
+    body: JSON.stringify(req),
   });
 }

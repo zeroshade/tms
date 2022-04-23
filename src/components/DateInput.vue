@@ -7,7 +7,7 @@
     offset-y
     min-width="290px"
     @input='selected = value'
-    @update:return-value='$emit("input", selected)'>
+    @update:return-value='$emit("input", selected); $emit("change", selected)'>
     <template v-slot:activator="{ on }">
       <v-text-field
         :class='fieldCls'
@@ -19,7 +19,7 @@
         readonly
         v-on="on" />
     </template>
-    <v-date-picker event-color='teal' :events='events'
+    <v-date-picker event-color='teal' :events='events' :allowed-dates="allowedDates"
       no-title
       :min='min' :max='max' v-model='selected' @input="menu = false" />
   </v-menu>
@@ -37,8 +37,9 @@ export default class DateInput extends Vue {
   @Prop(String) public readonly fieldCls!: string;
   @Prop(Boolean) public readonly required!: boolean;
   @Prop({ type: [Array, String], default: () => [] }) public readonly errors!: string | string[];
-  @Prop([Array, Function]) public readonly events!: ((date: string) => boolean) | string[];
+  @Prop([Array, Function]) public readonly events!: ((date: string) => boolean | string[]) | string[];
   @Prop({default: false, type: Boolean}) public readonly includeYear!: boolean;
+  @Prop([Array, Function]) public readonly allowedDates!: string[];
 
   public rules = [
     (v: string) => (!this.required || !!v) || 'Cannot be empty',

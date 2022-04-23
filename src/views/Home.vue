@@ -85,6 +85,7 @@ import { getAuthInstance } from '@/store/auth';
 })
 export default class Home extends Vue {
   @Action('auth/getUser') public getUser!: () => Promise<any>;
+  @Action('auth/getIdTokenClaims') public getIdTokenClaims!: (o?: any) => Promise<object>;
   @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Action('product/deleteProduct') public deleteProduct!: (p: Product) => Promise<void>;
   @Getter('product/products') public prods!: Product[];
@@ -165,7 +166,7 @@ export default class Home extends Vue {
   public user: {[claim: string]: string | string[]} = {};
 
   public async mounted() {
-    this.user = await this.getUser();
+    this.user = await this.getUser();    
   }
 
   public get isAdmin(): boolean {

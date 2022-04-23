@@ -110,7 +110,7 @@
 
 <script lang='ts'>
 import { Component, Vue, Prop, Watch, Inject } from 'vue-property-decorator';
-import { Schedule, Fish } from '@/api/product';
+import { Schedule, Fish, FishDisplay } from '@/api/product';
 import EditSchedule from '@/components/EditSchedule.vue';
 import { Action, Getter } from 'vuex-class';
 import Product, { Boat } from '@/api/product';
@@ -153,9 +153,9 @@ export default class ProductForm extends Vue {
     const ret = [];
 
     const fishkeys = Object.keys(Fish);
-    const fishvals = Object.values(Fish);
+    const fishvals = Object.values(Fish);    
     for (let i = 0; i < fishkeys.length; ++i) {
-      ret.push({text: fishkeys[i], value: fishvals[i]});
+      ret.push({text: FishDisplay[fishvals[i]], value: fishvals[i]});
     }
     return ret;
   }

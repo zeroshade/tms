@@ -1,5 +1,5 @@
 <template>
-  <div id='paypal-button-container'></div>
+  <div class='checkout' id='paypal-button-container'></div>
 </template>
 
 <script lang='ts'>
@@ -69,7 +69,7 @@ export default class PaypalCheckout extends Vue {
 
   public createButton() {
     this.btnref = paypal.Buttons({
-      enableStandardCardFields: true,
+      enableStandardCardFields: false,
       createOrder: (data: object, actions: CreateActions): Promise<object> => {
         return actions.order.create({
           intent: this.intent,
@@ -113,12 +113,12 @@ export default class PaypalCheckout extends Vue {
       },
       onInit: this.onInit,
       onClick: this.onClick,
-      style: this.btnStyle,
+      style: {...this.btnStyle, fundingicons: 'true'},
     }).render('#paypal-button-container');
   }
 
   public async mounted() {
-    await this.$loadScript(`https://www.paypal.com/sdk/js?integration-date=2020-05-01&client-id=${process.env.VUE_APP_PAYPAL_ID}&currency=USD&disable-funding=credit&merchant-id=${this.merchantId}`);
+    await this.$loadScript(`https://www.paypal.com/sdk/js?integration-date=2021-09-27&client-id=${process.env.VUE_APP_PAYPAL_ID}&currency=USD&disable-funding=credit&enable-funding=venmo&merchant-id=${this.merchantId}&components=buttons,funding-eligibility`);
     this.createButton();
   }
 
@@ -129,3 +129,9 @@ export default class PaypalCheckout extends Vue {
   }
 }
 </script>
+
+<style scoped>
+.checkout {
+  width: 50%;
+}
+</style>
