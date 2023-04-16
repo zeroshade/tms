@@ -11,10 +11,10 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-row dense v-if='isAdmin'>
+    <v-row dense v-if='isAdmin && !flags.useShows'>
       <v-col><div class='headline mb-3'>Boats</div></v-col>
     </v-row>
-    <v-row dense v-if='isAdmin'>
+    <v-row dense v-if='isAdmin && !flags.useShows'>
       <v-col cols='12' sm='5' md='5' lg='5' xl='5'>
         <v-data-table :headers='boatHeaders' :loading='loading' loading-text='Loading Boats...' :items='boats' class='elevation-2'>
           <template v-slot:footer>
@@ -43,22 +43,27 @@
       </v-col>
     </v-row>
     <v-row>
-      <v-col><div class='headline mb-3'>Products</div></v-col>
+      <v-col>
+        <div class='headline mb-3'>{{title}}</div>
+      </v-col>
     </v-row>
     <v-row>
       <v-col>
-        <v-data-table must-sort :loading='loading' :search='search' loading-text='Loading Products...' :headers='headers' :items='prods' class='elevation-1'>
+        <v-data-table must-sort :loading='loading' :search='search' :loading-text="`Loading ${title}...`" :headers='headers' :items='items' class='elevation-1'>
           <template v-slot:top>
-            <v-text-field v-model='search' label='Search Products' class='mx-12' clearable />
+            <v-text-field v-model='search' :label="`Search ${title}`" class='mx-12' clearable />
           </template>
-          <template v-slot:item.boatId='{value}'>
+          <template v-if="!flags.useShows" v-slot:item.boatId='{value}'>
             {{ getBoat(value) ? getBoat(value).name : '' }}
+          </template>
+          <template v-else v-slot:item.boatId='{}'>
+            N/A
           </template>
           <template v-slot:item.publish="{item}">
             {{ item.publish ? 'Y' : 'N' }}
           </template>
           <template v-slot:item.action="{item}">
-            <v-btn class='mr-3' small icon :to='{ name: "editprod", params: { id: item.id } }'>
+            <v-btn class='mr-3' small icon :to='{ name: item.type === "stripe" ? "editproddep" : flags.useShows ? "editshow" : "editprod", params: { id: item.id ? item.id : item.stripeId } }'>
               <v-icon small>edit</v-icon>
             </v-btn>
             <v-btn class='ml-3' small icon>
@@ -72,11 +77,13 @@
 </template>
 
 <script lang='ts'>
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Inject, Vue } from 'vue-property-decorator';
 import { Getter, Action } from 'vuex-class';
 import Product, { Boat } from '@/api/product';
 import InlineEdit from '@/components/InlineEdit.vue';
 import { getAuthInstance } from '@/store/auth';
+import { AdminFeatureFlags } from '@/api/utils';
+import { Show } from '@/api/shows';
 
 @Component({
   components: {
@@ -93,6 +100,20 @@ export default class Home extends Vue {
   @Action('product/saveBoat') public saveBoat!: (b: Boat) => Promise<void>;
   @Action('product/createBoat') public createBoat!: (b: Boat) => Promise<void>;
   @Action('product/deleteBoat') public deleteBoat!: (b: Boat) => Promise<void>;
+  @Action('shows/loadShows') public loadShows!: () => Promise<void>;
+  @Getter('shows/shows') public shows!: Show[];
+  @Inject() public readonly flags!: AdminFeatureFlags;
+
+  public get items() {
+    if (this.flags.useShows) {
+      return this.shows;
+    }
+    return this.prods;
+  }
+
+  public get title(): string {
+    return this.flags.useShows ? 'Shows' : 'Products';
+  }
 
   public headers = [
     {
@@ -191,7 +212,11 @@ export default class Home extends Vue {
   }
 
   public async created() {
-    if (!this.prods.length) {
+    if (this.flags.useShows && !this.shows.length) {
+      this.loading = true;
+      await this.loadShows();
+      this.loading = false;
+    } else if (!this.prods.length) {
       this.loading = true;
       await this.loadProducts();
       this.loading = false;

@@ -11,8 +11,8 @@ const authGuard = async (to: Route, from: Route, next: nextfunc ): Promise<void>
   const auth = getAuthInstance();
 
   const fn = () => {
-    if (auth.isAuthenticated) {
-      if (to.path != '/admin/product/orders' && auth.user[process.env.VUE_APP_AUTH0_CLAIM_NAMESPACE + 'role']?.includes('Crew')) {        
+    if (auth.isAuthenticated) {      
+      if ((to.path != '/admin/product/orders' && !to.path.startsWith('/admin/reports')) && auth.user[process.env.VUE_APP_AUTH0_CLAIM_NAMESPACE + 'role']?.includes('Crew')) {        
         return next('/admin/product/orders')
       }
       return next();
@@ -57,6 +57,12 @@ export default new Router({
       beforeEnter: authGuard,
     },
     {
+      path: '/admin/show/add',
+      name: 'addshow',
+      component: () => import(/* webpackChunkName: "show" */ '@/views/products/ShowForm.vue'),
+      beforeEnter: authGuard,
+    },
+    {
       path: '/admin/product/edit/:id',
       name: 'editprod',
       beforeEnter: authGuard,
@@ -64,10 +70,35 @@ export default new Router({
       props: (route: Route) => ({ id: +route.params.id}),
     },
     {
+      path: '/admin/product/editdep/:id',
+      name: 'editproddep',
+      beforeEnter: authGuard,
+      component: () => import(/* webpackChunkName: "product" */ '@/views/products/DepositProduct.vue'),
+      props: (route: Route) => ({ stripeId: route.params.id }),
+    },
+    {
+      path: '/admin/show/edit/:id',
+      name: 'editshow',
+      component: () => import(/* webpackChunkName: "show" */ '@/views/products/ShowForm.vue'),
+      props: (route: Route) => ({ id: +route.params.id}),
+    },
+    {
       path: '/admin/product/orders',
       name: 'vieworders',
       beforeEnter: authGuard,
       component: () => import(/* webpackChunkName: "orders" */ '@/views/products/ViewOrders.vue'),
+    },
+    {
+      path: '/admin/show/orders',
+      name: 'viewshoworders',
+      beforeEnter: authGuard,
+      component: () => import(/* webpackChunkName: "orders" */ '@/views/products/ViewShowOrders.vue'),
+    },
+    {
+      path: '/admin/product/deposits',
+      name: 'viewdeps',
+      beforeEnter: authGuard,
+      component: () => import(/* webpackChunkName: "orders" */ '@/views/products/ViewDeposits.vue'),      
     },
     {
       path: '/admin/tickets/price/edit',
@@ -129,6 +160,12 @@ export default new Router({
       name: 'manualentry',
       beforeEnter: authGuard,
       component: () => import(/* webpackChunkName: "tickets" */ '@/views/tickets/ManualEntry.vue'),
+    },
+    {
+      path: '/admin/deposit/manual',
+      name: 'manualdeposit',
+      beforeEnter: authGuard,
+      component: () => import(/* webpackChunkName: "tickets" */ '@/views/products/ManualDeposit.vue'),
     },
   ],
 });

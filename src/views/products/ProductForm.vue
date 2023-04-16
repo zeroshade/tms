@@ -115,6 +115,7 @@ import EditSchedule from '@/components/EditSchedule.vue';
 import { Action, Getter } from 'vuex-class';
 import Product, { Boat } from '@/api/product';
 import colors from 'vuetify/lib/util/colors';
+import { AdminFeatureFlags } from '@/api/utils';
 
 function fixDate(year: number, day: string): string {
   if (day.length <= 5) {
@@ -134,7 +135,7 @@ export default class ProductForm extends Vue {
   @Getter('product/products') public prods!: Product[];
   @Getter('product/boats') public boats!: Boat[];
   @Prop({ default: -1}) public id!: number;
-  @Inject() public readonly flags!: object;
+  @Inject() public readonly flags!: AdminFeatureFlags;
 
   public stepper = 1;
 
@@ -147,6 +148,7 @@ export default class ProductForm extends Vue {
   public valid = true;
   public schedList: Schedule[] = [];
   public fish: Fish = Fish.Fluke;
+  public type: string = '';
 
   public readonly required = (v: string) => !!v || 'Required Field';
   public get fishOpts(): Array<{text: string, value: string}> {
@@ -196,8 +198,8 @@ export default class ProductForm extends Vue {
 
   public async save() {
     if ((this.$refs.form as HTMLFormElement).validate() && this.validateSchedList()) {
-      const {id, name, desc, publish, color, showTickets, schedList, fish, boatId} = this;
-      this.saveProduct({id, name, desc, color, publish, showTickets, schedList, fish, boatId});
+      const {id, name, desc, publish, color, showTickets, schedList, fish, boatId, type} = this;
+      this.saveProduct({id, name, desc, color, publish, showTickets, schedList, fish, boatId, type});
       this.$router.push({name: 'home'});
     }
   }

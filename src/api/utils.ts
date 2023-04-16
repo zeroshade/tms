@@ -5,6 +5,9 @@ import { ScheduleSold, ManualOverride } from '@/api/tickets';
 import moment from 'moment-timezone';
 import * as momd from 'moment-timezone';
 import { extendMoment, DateRange } from 'moment-range';
+import {StripeProduct, StripePrice, StripeSched, DepositEvent} from '@/api/product';
+import {DepositSearchResult} from '@/api/stripe';
+
 const { range } = extendMoment(momd);
 
 export enum PaymentHandler {
@@ -19,6 +22,8 @@ export interface AdminFeatureFlags {
   readonly hasReports: boolean;
   readonly refunds: boolean;
   readonly hasHelp: boolean;
+  readonly useShows: boolean;
+  readonly useDeposits: boolean;
 }
 
 export interface CalFeatureFlags {
@@ -50,6 +55,30 @@ export function getMonths(prods: Product[]): number[] {
   const today = moment();
   const ranges: DateRange[] = [];
   for (const p of prods.filter((pr) => pr.publish)) {
+    if (!p.schedList) {
+      for (const sc of (p as StripeProduct).schedules) {
+        const s = moment(sc.start);
+        const e = moment(sc.end);
+
+        if (s.year() !== today.year() && e.year() !== today.year()) {
+          continue;
+        }
+
+        const schedRange = range(s, e).snapTo('month');
+        const idx = ranges.findIndex((r) => {
+          return r.overlaps(schedRange, { adjacent: true });
+        });
+        if (idx !== -1) {
+          const newrange = ranges[idx].add(schedRange, { adjacent: true });
+          if (newrange !== null) {
+            ranges[idx] = newrange;
+            continue;
+          }
+        }
+        ranges.push(schedRange);
+      }
+      continue;
+    }
     for (const sc of p.schedList) {
       const s = moment(sc.start);
       const e = moment(sc.end);
@@ -85,6 +114,84 @@ export function getMonths(prods: Product[]): number[] {
   return Array.from(monthSet);
 }
 
+export function getDepositEvents(start: moment.Moment, end: moment.Moment, prods: Product[], curDeposits: DepositSearchResult[]): DepositEvent[] {
+  let existing = new Map<string, Array<{time: string, length: number}>>();
+  for (const dep of curDeposits) {
+    const obj = {time: dep.metadata.time, length: Number(dep.metadata.length)};
+    if (existing.has(dep.metadata.date)) {
+      let cur = existing.get(dep.metadata.date)!;
+      cur.push(obj);
+      existing.set(dep.metadata.date, cur);
+    } else {
+      existing.set(dep.metadata.date, [obj]);
+    }
+  }  
+
+  let events: DepositEvent[] = [];
+  for (const p of prods.filter((pr) => (pr.publish) && pr.type === 'stripe')) {
+    const timeRange = range(start, end.clone().add(1, 'd'));
+    const prod = p as StripeProduct;
+    const pricemap = new Map<string, StripePrice>();
+    for (const pr of prod.prices) {
+      pricemap.set(pr.id, pr);
+    }
+
+    for (const d of timeRange.by('day')) {      
+      for (const sc of prod.schedules) {
+        const s = moment(sc.start).tz('America/New_York', true);
+        const e = moment(sc.end).tz('America/New_York', true).hour(23).minutes(59);
+
+        const schedRange = range(s, e);
+        if (!d.within(schedRange) || !sc.days.includes(d.day())) {
+          continue;
+        }
+
+        if (sc.notAvail && sc.notAvail.find((val) => moment(val, 'YYYY-MM-DD').isSame(d, 'day'))) {
+          continue;
+        }
+
+        let times = sc.times.sort();
+        let first: moment.Moment | null = null;
+        if (existing.has(d.format('YYYY-MM-DD'))) {
+          const current = existing.get(d.format('YYYY-MM-DD'))!;          
+          current.sort((a, b) => a.time < b.time ? -1 : a.time > b.time ? 1 : 0);
+          first = moment(current[0].time, 'H:m');
+
+          for (const c of current) {
+            times = times.filter((v) => {
+              const t = moment(c.time, 'H:m');
+              return !moment(v, 'H:m').isBetween(t, t.clone().add(c.length+0.5, 'h'), undefined , '[)');
+            });
+          }
+        }
+
+        let [morning, afternoon, evening] = times.reduce(
+          (arrs: Array<string[]>, elem) => {
+            const h = Number(elem.slice(0, 2));
+            arrs[h < 12 ? 0 : h < 17 ? 1: 2].push(elem);
+            return arrs;
+          }, [[], [], []]);
+
+        const labels = ['Morning', 'Afternoon', 'Evening'];
+        [morning, afternoon, evening].forEach((t, idx) => {          
+          events.push({
+            minimum: sc.minimum,
+            product: prod,
+            date: d,
+            times: t,
+            price: pricemap.get(sc.price)!,
+            type: 'stripe',
+            start: d.format('YYYY-MM-DD'),
+            label: labels[idx],
+            firstOfDay: first,
+          });          
+        });
+      }
+    }
+  }
+  return events;
+}
+
 export function getEvents(start: moment.Moment, end: moment.Moment,
                           prods: Product[], sold: Map<string, ScheduleSold> | null,
                           overrides: ManualOverride[] | null, includeUnpub: boolean = false): EventInfo[] {
@@ -98,7 +205,7 @@ export function getEvents(start: moment.Moment, end: moment.Moment,
     }
   }
 
-  for (const p of prods.filter((pr) => includeUnpub || pr.publish)) {
+  for (const p of prods.filter((pr) => (includeUnpub || pr.publish) && pr.type !== 'stripe' )) {
     const timeRange = range(start, end.clone().add(1, 'd'));
     for (const d of timeRange.by('day')) {
       for (const sc of p.schedList) {

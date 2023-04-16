@@ -2,6 +2,7 @@ import { Module } from 'vuex';
 import { RootState, ProductState } from './states';
 import Product, { getProductsReq, putProduct, deleteProduct, Boat,
   createBoatReq, putBoatReq, deleteBoatReq, getBoatsReq, getProdInfoReq } from '@/api/product';
+import { searchDeposits, DepositSearchResult, saveManualDeposit, deleteManualDeposit, listManualDeposits } from '@/api/stripe';
 
 const productModule: Module<ProductState, RootState> = {
   namespaced: true,
@@ -84,6 +85,20 @@ const productModule: Module<ProductState, RootState> = {
       const resp = await dispatch('auth/makeAuthReq', getProdInfoReq(id), { root: true });
       return await resp.json();
     },
+    async searchDeposits({}, yearmonth: string): Promise<DepositSearchResult[]> {
+      const resp = await fetch(searchDeposits(yearmonth));
+      return await resp.json();
+    },
+    async saveManualDeposit({dispatch}, req: any) {
+      await dispatch('auth/makeAuthReq', saveManualDeposit(req), { root: true }); 
+    },
+    async deleteManualDeposit({dispatch}, req: any) {
+      await dispatch('auth/makeAuthReq', deleteManualDeposit(req), { root: true });      
+    },
+    async listManualDeposits({}): Promise<any[]> {
+      const resp = await fetch(listManualDeposits());
+      return await resp.json();
+    }
   },
 };
 

@@ -1,5 +1,5 @@
 import _Vue from 'vue';
-import createAuth0Client from '@auth0/auth0-spa-js';
+import createAuth0Client, { GetTokenSilentlyVerboseResponse } from '@auth0/auth0-spa-js';
 import Auth0Client from '@auth0/auth0-spa-js/dist/typings/Auth0Client';
 
 /** Define a default action to perform after authentication */
@@ -40,15 +40,18 @@ export class Auth {
         // this.redirectCallback(appState);
       }
     } catch (e) {
-      this.error = e;
+      this.error = e as Error;
     } finally {
       this.isAuthenticated = await this.auth0Client.isAuthenticated();
-      this.user = await this.auth0Client.getUser();
+      const user = await this.auth0Client.getUser();
+      if (user !== undefined) {
+        this.user = user;
+      }
       this.loading = false;
     }
   }
 
-  public async getUser(): Promise<{[claim: string]: string | string[]}> {
+  public async getUser(): Promise<{[claim: string]: string | string[]} | undefined> {
     return await this.auth0Client?.getUser();
   }
 
@@ -62,18 +65,24 @@ export class Auth {
     } finally {
       this.popupOpen = false;
     }
-    this.user = await this.auth0Client!.getUser();
-    this.isAuthenticated = true;
+    const user = await this.auth0Client!.getUser();
+    if (user !== undefined) {
+      this.user = user;
+      this.isAuthenticated = true;
+    }
   }
 
   public async handleRedirectCallback() {
     this.loading = true;
     try {
       await this.auth0Client!.handleRedirectCallback();
-      this.user = await this.auth0Client!.getUser();
-      this.isAuthenticated = true;
+      const user = await this.auth0Client!.getUser();
+      if (user !== undefined) {
+        this.user = user;
+        this.isAuthenticated = true;
+      }
     } catch (e) {
-      this.error = e;
+      this.error = e as Error;
       this.logout({
         returnTo: 'google.com',
       });
@@ -90,7 +99,7 @@ export class Auth {
     return this.auth0Client!.getIdTokenClaims(o);
   }
 
-  public getTokenSilently(o?: any): Promise<string> {
+  public getTokenSilently(o?: any): Promise<GetTokenSilentlyVerboseResponse> {
     return this.auth0Client!.getTokenSilently(o);
   }
 

@@ -8,6 +8,8 @@ interface PInfo {
   fish: Fish;
   showTickets: boolean;
   boatId: number;
+  type: string;
+  stripeId?: string;
 }
 
 export enum Fish {
@@ -143,6 +145,43 @@ export interface Boat {
   id: number;
   name: string;
   color: string;
+}
+
+export interface StripePrice {
+  id: string;
+  product: string;
+  name: string;
+  amount: number;
+}
+
+export interface StripeSched {
+  days: number[];
+  notAvail: string[] | null;
+  start: string;
+  end: string;
+  price: string;
+  minimum: number;
+  times: string[];
+}
+
+
+interface WithStripe {
+  prices: StripePrice[];
+  schedules: StripeSched[];
+}
+
+export type StripeProduct = Product & WithStripe;
+
+export interface DepositEvent {
+  product: StripeProduct;
+  price: StripePrice;  
+  date: moment.Moment;
+  start: string;
+  times: string[];
+  type: 'stripe';
+  minimum: number;
+  label: string;
+  firstOfDay: moment.Moment | null;
 }
 
 export function getBoatsReq(): Request {

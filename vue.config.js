@@ -33,11 +33,15 @@ module.exports = {
       filename: 'admin/index.html',
     },
     calendar: {
-      entry: 'src/cal.ts',
+      entry: process.env.VUE_APP_CUSTOM_CAL_FILE 
+       ? `src/${process.env.VUE_APP_CUSTOM_CAL_FILE}`
+       : 'src/cal.ts',
       template: process.env.VUE_APP_CUSTOM_CALENDAR_TMPL
         ? `public/${process.env.VUE_APP_CUSTOM_CALENDAR_TMPL}`
         : 'public/calendar.html',
-      filename: 'calendar/index.html',
+      filename: process.env.VUE_APP_CUSTOM_CAL_LOCATION
+        ?  process.env.VUE_APP_CUSTOM_CAL_LOCATION
+        : 'calendar/index.html',
     }
   },
   productionSourceMap: true,

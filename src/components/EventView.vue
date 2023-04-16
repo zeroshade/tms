@@ -1,9 +1,10 @@
 <template>
   <v-dialog :fullscreen='$vuetify.breakpoint.mobile' max-width='750px' :value='value' @input='$emit("input", $event)'>
+    <template v-if='event && event.type !== "stripe"'>
     <v-card v-if='event'
       color='grey lighten-4'
       :min-width='($vuetify.breakpoint.mobile) ? undefined : "600px"'
-      flat>
+      flat>      
       <v-toolbar :color='event.color' dark>
         <v-toolbar-title v-html='event.name' />
         <v-spacer />
@@ -105,6 +106,10 @@
         </v-btn>
       </v-card-actions>
     </v-card>
+    </template>
+    <template v-else>
+        <make-deposit :event='event' @input='close()' />
+    </template>    
   </v-dialog>
 </template>
 
@@ -116,9 +121,10 @@ import TicketCategory, { CartItem } from '@/api/tickets';
 import moment from 'moment-timezone';
 import { Item } from '@/api/paypal';
 import { itemToGtag } from '@/api/gtag';
+import MakeDeposit from '@/components/stripe/MakeDeposit.vue';
 
 @Component({
-  components: {},
+  components: {MakeDeposit},
   filters: {
     money: (value: string | number) => {
       const val = Number(value);

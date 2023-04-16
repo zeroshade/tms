@@ -147,6 +147,8 @@ export interface OrderDetails {
   status: string;
   update_time: string;
   purchase_units: PurchaseUnit[];
+  submit_type?: string;
+  payment_intent?: any;
 }
 
 export interface OrderError {

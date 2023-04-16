@@ -4,6 +4,7 @@ import { RootState } from './states';
 import TicketModule from './tickets';
 import CartModule from './cart';
 import ProductModule from './products';
+import ShowModule from './shows';
 import { getOrdersReq, loadOrders, OrdersReq } from '@/api/tickets';
 import { OrderDetails, Item } from '@/api/paypal';
 import { Report, getReportsReq, saveReportReq, deleteReportsReq } from '@/api/reports';
@@ -44,6 +45,7 @@ export default new Vuex.Store<RootState>({
     tickets: TicketModule,
     cart: CartModule,
     auth: AuthModule,
+    shows: ShowModule,
   },
   state: {
     config: {emailContent: '', passTitle: '', notifyNumber: '',

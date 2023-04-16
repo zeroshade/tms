@@ -39,11 +39,23 @@
             <v-list-item-title>Product List</v-list-item-title>
           </v-list-item>
         </template>
-        <v-list-item :to="{name: 'newprod'}">
-          <v-list-item-title>Add A Product</v-list-item-title>
+        <v-list-item v-if="!flags.useShows" :to="{name: 'newprod'}">
+          <v-list-item-title>Add Standard Product</v-list-item-title>
         </v-list-item>
-        <v-list-item :to="{name: 'vieworders'}">
+        <v-list-item v-if="flags.useDeposits">
+          <v-list-item-title>Add Deposit Product</v-list-item-title>
+        </v-list-item>        
+        <v-list-item v-if="!flags.useShows" :to="{name: 'vieworders'}">
           <v-list-item-title>View Orders</v-list-item-title>
+        </v-list-item>
+        <v-list-item v-else :to="{name: 'viewshoworders'}">
+          <v-list-item-title>View Orders</v-list-item-title>
+        </v-list-item>
+        <v-list-item v-if="flags.useDeposits" :to="{name: 'viewdeps' }">
+          <v-list-item-title>View Deposits</v-list-item-title>
+        </v-list-item>
+        <v-list-item v-if="flags.useShows" :to="{name: 'addshow'}">
+          <v-list-item-title>Add Show</v-list-item-title>
         </v-list-item>
 
       </v-list-group>
@@ -73,6 +85,9 @@
         </v-list-item>
         <v-list-item :to="{name: 'edittickets'}" v-if='flags.hasTicketLeft'>
           <v-list-item-title>Edit Tickets Available</v-list-item-title>
+        </v-list-item>
+        <v-list-item v-if="flags.useDeposits" :to="{name: 'manualdeposit'}">
+          <v-list-item-title>Manually Enter Deposit</v-list-item-title>
         </v-list-item>
         <v-list-item :to="{name: 'manualentry'}">
           <v-list-item-title>Manual Ticket Entry</v-list-item-title>
@@ -113,12 +128,13 @@
 import { Component, Vue, Prop, PropSync, Inject } from 'vue-property-decorator';
 import { Getter } from 'vuex-class';
 import { User } from '@/api/users';
+import { AdminFeatureFlags } from '@/api/utils';
 
 @Component
 export default class NavBar extends Vue {
   @PropSync('show', { type: Boolean }) public sync!: boolean;
   @Prop(Function) public logout!: (o?: any) => void;
-  @Inject() public readonly flags!: object;
+  @Inject() public readonly flags!: AdminFeatureFlags;
   @Getter('auth/user') public readonly self!: User | null;
 
   public get isCrew(): boolean {

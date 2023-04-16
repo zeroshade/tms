@@ -4,6 +4,7 @@ import { Auth } from '@/api/auth';
 import { User } from '@/api/users';
 import { Config } from '@/api/config';
 import { Report } from '@/api/reports';
+import { Show } from '@/api/shows';
 
 export interface RootState {
   config: Config;
@@ -13,6 +14,10 @@ export interface RootState {
 export interface ProductState {
   productList: Product[];
   boatList: Boat[];
+}
+
+export interface ShowState {
+  shows: Show[];
 }
 
 export interface TicketState {

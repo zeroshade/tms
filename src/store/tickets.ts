@@ -7,7 +7,7 @@ import TicketCategory, {
 } from '@/api/tickets';
 import { Item } from '@/api/paypal';
 import moment from 'moment';
-import { redeemGiftCard, Redemption, RefundInfo, refundTickets, TransferReq, transferTickets, validateGiftcard } from '@/api/stripe';
+import { getDeposits, redeemGiftCard, Redemption, RefundInfo, refundTickets, TransferReq, transferTickets, validateGiftcard } from '@/api/stripe';
 
 const ticketModule: Module<TicketState, RootState> = {
   namespaced: true,
@@ -110,6 +110,10 @@ const ticketModule: Module<TicketState, RootState> = {
     },
     async redeemGiftCard({}, req: Redemption): Promise<Response> {
       return await fetch(redeemGiftCard(req));
+    },
+    async getDeposits({dispatch}, payload: {year: number, month: number}): Promise<Object[]> {
+      const resp = await dispatch('auth/makeAuthReq', getDeposits(payload.year, payload.month), { root: true });
+      return resp.json();
     },
   },
 };

@@ -2,7 +2,7 @@ import { Auth } from '@/api/auth';
 import { AuthState, RootState } from './states';
 import { Module } from 'vuex';
 import getUsers, { User, addUser, deleteUser, resetPass } from '@/api/users';
-import { RedirectLoginResult } from '@auth0/auth0-spa-js/dist/typings/global';
+import { GetTokenSilentlyVerboseResponse, RedirectLoginResult } from '@auth0/auth0-spa-js/dist/typings/global';
 import { Logged, getLoggedActions } from '@/api/utils';
 
 const auth = new Auth();
@@ -65,10 +65,10 @@ const authModule: Module<AuthState, RootState> = {
     logout({state}, o: any) {
       state.auth.logout(o);
     },
-    async getIdTokenClaims({state}): Promise<object> {
+    async getIdTokenClaims({state}): Promise<object | undefined> {
       return await state.auth.getIdTokenClaims();
     },
-    async getBearerToken({state}): Promise<string> {
+    async getBearerToken({state}): Promise<GetTokenSilentlyVerboseResponse> {
       return await state.auth.getTokenSilently();
     },
     async makeAuthReq({dispatch}, req: Request): Promise<Response> {

@@ -40,6 +40,8 @@ export default class App extends Vue {
     hasReports: toBool(process.env.VUE_APP_USE_REPORTS || false),
     refunds: toBool(process.env.VUE_APP_HAS_REFUNDS || false),
     hasHelp: toBool(process.env.VUE_APP_HAS_HELP_LINK || false),
+    useShows: toBool(process.env.VUE_APP_USE_SHOWS || false),
+    useDeposits: toBool(process.env.VUE_APP_USE_DEPOSITS || false),
   };
 
   public showNav = true;

@@ -41,7 +41,7 @@
             </template>
 
             <template v-slot:item='{item}'>
-              <tr class='eventlist' @click='showEvent({nativeEvent: $event, event: item})'>
+              <tr v-if='item.type !== "stripe"' class='eventlist' @click='showEvent({nativeEvent: $event, event: item})'>
                 <td><event :type='type' :event='item' /></td>
               </tr>
             </template>
@@ -61,7 +61,7 @@
               :first-interval='firstInterval'
               :interval-count='25-firstInterval'
               :events='events'
-              :event-color='flags.useFish ? "" : (e) => e.color'
+              :event-color='undefined'
               :event-text-color='flags.useFish ? "black" : undefined'
               :show-interval-label='showIntervalLabel'
               :interval-format='intervalFormat'
@@ -77,7 +77,8 @@
               </template>
 
               <template v-slot:event='{event, outside}'>
-                <event v-if='!outside' :type='type' :event='event' />
+                <event v-if='event.type !== "stripe" && !outside' :type='type' :event='event' />
+                <cal-deposit-event v-else :event='event'></cal-deposit-event>
               </template>
 
             </v-calendar>
@@ -109,16 +110,16 @@
 <script lang="ts">
 import { Component, Vue, Ref, Provide } from 'vue-property-decorator';
 import { Getter, Mutation, Action } from 'vuex-class';
-import Product, { EventInfo, Fish } from '@/api/product';
+import Product, { DepositEvent, EventInfo, Fish } from '@/api/product';
 import { ScheduleSold, ManualOverride } from '@/api/tickets';
 import { OrderDetails } from '@/api/paypal';
-import { getEvents, getMonths, CalFeatureFlags, PaymentHandler } from '@/api/utils';
+import { getDepositEvents, getEvents, getMonths, CalFeatureFlags, PaymentHandler } from '@/api/utils';
 import { itemToGtag } from '@/api/gtag';
 import moment from 'moment-timezone';
 import * as momd from 'moment-timezone';
 import { extendMoment } from 'moment-range';
 import CalendarTopBar from '@/components/CalendarTopBar.vue';
-import { StripeSession } from '@/api/stripe';
+import { StripeSession, DepositSearchResult } from '@/api/stripe';
 
 const { range } = extendMoment(momd);
 
@@ -138,6 +139,12 @@ interface CalDate {
   future: boolean;
 }
 
+interface EventIface {
+  type: string;
+  start: string;
+  cancelled?: boolean;
+}
+
 interface Cal extends Vue {
   getFormatter(opts: {[key: string]: string}): (d: CalDate) => string;
   checkChange(): void;
@@ -151,6 +158,21 @@ function toBool(arg: string | boolean): boolean {
   return arg;
 }
 
+function eventReserved(ev: DepositEvent): boolean {
+  if (ev.times.length === 0) {
+    return true;
+  }
+
+  if (!ev.firstOfDay) {
+    return false;
+  }
+
+  return ev.times.filter((v) => {
+    let m = moment(v, 'H:m');
+    return !m.isBetween(ev.firstOfDay!.clone().subtract(4, 'h'), ev.firstOfDay, undefined, '()');
+  }).length === 0;
+}
+
 @Component({
   filters: {
     formatTime(t: string): string {
@@ -160,6 +182,7 @@ function toBool(arg: string | boolean): boolean {
   },
   components: {
     CalendarTopBar,
+    CalDepositEvent: () => import(/* webpackPrefetch: true */ /* webpackChunkName: "events" */ '@/components/stripe/CalDepositEvent.vue'),
     Event: () => import(/* webpackPrefetch: true */ /* webpackChunkName: "events" */ '@/components/Event.vue'),
     Cart: () => import(/* webpackPrefetch: true */ /* webpackChunkName: "cart" */ '@/components/Cart.vue'),
     EventView: () => import(/* webpackPrefetch: true */ /* webpackChunkName: "events" */ '@/components/EventView.vue'),
@@ -174,6 +197,7 @@ export default class Calendar extends Vue {
   @Action('product/loadProducts') public loadProducts!: () => Promise<void>;
   @Action('tickets/getSold') public getSold!: (payload: {from: moment.Moment, to: moment.Moment})
     => Promise<ScheduleSold[]>;
+  @Action('product/searchDeposits') public searchDeposits!: (yearmonth: string) => Promise<DepositSearchResult[]>;
   @Action('cart/confirmOrder') public confirmOrder!: (checkoutId: string) => Promise<void>;
   @Action('tickets/getOverrideRange') public getOverrides!: (payload: {from: moment.Moment, to: moment.Moment})
     => Promise<ManualOverride[]>;
@@ -206,21 +230,7 @@ export default class Calendar extends Vue {
   public start: CalDate | null = null;
   public end: CalDate | null = null;
   public today = moment().format('YYYY-MM-DD');
-  public events: EventInfo[] = [{
-    boatId: 1,
-    fish: Fish.Fluke,
-    start: '2019-01-01',
-    end: '2019-01-01',
-    stock: 0,
-    id: 0,
-    name: '',
-    desc: '',
-    color: '',
-    showTickets: false,
-    startTime: '',
-    endTime: '',
-    price: '',
-  }];
+  public events: EventIface[] = [];
   public selectedEvent: EventInfo | null = null;
   public selectedElement: EventTarget | null = null;
   public selectedOpen = false;
@@ -292,6 +302,7 @@ export default class Calendar extends Vue {
       const sess: StripeSession = await resp.json();
       if (status === 'success') {
         this.order = {
+          submit_type: sess.submit_type,
           create_time: '',
           intent: 'payment',
           id: sess.payment_intent.id,
@@ -303,6 +314,7 @@ export default class Calendar extends Vue {
             email_address: sess.payment_intent.payment_method.billing_details.email,
             name: { given_name: sess.payment_intent.payment_method.billing_details.name, surname: '' },
           },
+          payment_intent: sess.payment_intent,
         };
         this.success = true;
       }
@@ -377,15 +389,36 @@ export default class Calendar extends Vue {
     this.showEvent({event: ev});
   }
 
-  public showEvent(arg: {nativeEvent?: Event, event: EventInfo}) {
+  public showEvent(arg: {nativeEvent?: Event, event: EventIface}) {
     if (arg.event.cancelled) {
       arg.nativeEvent!.stopPropagation();
       return;
     }
 
-    const from = moment(arg.event.start, 'YYYY-MM-DD H:mm');
-    const to = moment(arg.event.end, 'YYYY-MM-DD H:mm');
-    const evid = String(arg.event.id) + String(moment(arg.event.start, 'YYYY-MM-DD H:mm').unix());
+    if (arg.event.type === 'stripe') {
+      if (!eventReserved(arg.event as DepositEvent)) {
+        const open = () => {      
+          this.selectedEvent = arg.event as EventInfo;
+          this.selectedElement = arg.nativeEvent!.target;
+          setTimeout(() => this.selectedOpen = true, 10);
+        };
+
+        if (this.selectedOpen) {
+          this.selectedOpen = false;
+          setTimeout(open, 15);
+        } else {
+          open();
+        }
+      }
+
+      arg.nativeEvent!.stopPropagation();
+      return;
+    }
+
+    const ev = arg.event as EventInfo;
+    const from = moment(ev.start, 'YYYY-MM-DD H:mm');
+    const to = moment(ev.end, 'YYYY-MM-DD H:mm');
+    const evid = String(ev.id) + String(moment(arg.event.start, 'YYYY-MM-DD H:mm').unix());
 
     Promise.all([
       this.getSold({from, to}),
@@ -395,14 +428,14 @@ export default class Calendar extends Vue {
       for (const m of v[1]) {
         const id = String(m.pid) + String(moment(m.time).unix());
         if (evid === id) {
-          arg.event.cancelled = m.cancelled;
-          arg.event.avail = m.avail;
+          ev.cancelled = m.cancelled;
+          ev.avail = m.avail;
           return;
         }
       }
       for (const s of v[0]) {
         if (evid === String(s.pid) + String(moment(s.stamp).unix())) {
-          arg.event.avail = arg.event.stock - s.qty;
+          ev.avail = ev.stock - s.qty;
           return;
         }
       }
@@ -411,11 +444,11 @@ export default class Calendar extends Vue {
     const open = () => {
       this.$gtag.event('view_item', {items: [{
         id: evid,
-        list_name: arg.event.name,
+        list_name: ev.name,
         list_position: 1,
       }]});
 
-      this.selectedEvent = arg.event;
+      this.selectedEvent = ev;
       this.selectedElement = arg.nativeEvent!.target;
       setTimeout(() => this.selectedOpen = true, 10);
     };
@@ -505,6 +538,14 @@ export default class Calendar extends Vue {
     this.start = arg.start;
     this.end = arg.end;
     this.events = events;
+
+    const curDeposits = await this.searchDeposits(arg.start.year + '-' + String(arg.start.month).padStart(2, '0'));
+
+    const depositEvents = getDepositEvents(min, max, this.prods, curDeposits).filter((e) => {
+      const start = moment(e.start, 'YYYY-MM-DD H:mm').tz('America/New_York', true);
+      return !start.isSameOrBefore(current) && !start.isAfter(max);
+    });
+    this.events = [...this.events, ...depositEvents];
 
     if (this.flags.showFooter) {
       const footer = document.getElementsByClassName('v-calendar-weekly__head')[1];

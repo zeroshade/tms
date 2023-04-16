@@ -3,11 +3,11 @@
     v-model="menu"
     ref='menu'
     :close-on-content-click="false"
-    :nudge-right="40"
+    :nudge-right="20"
     transition="scale-transition"
     offset-y
     min-width="230px"
-    max-width="230px"
+    max-width="350px"
     @input='selected = value'
     @update:return-value='(ev) => { if (ev) { $emit("input", ev); } }'>
     <template v-slot:activator="{ on }">

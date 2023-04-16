@@ -118,14 +118,20 @@ export default class PaypalCheckout extends Vue {
   }
 
   public async mounted() {
-    await this.$loadScript(`https://www.paypal.com/sdk/js?integration-date=2021-09-27&client-id=${process.env.VUE_APP_PAYPAL_ID}&currency=USD&disable-funding=credit&enable-funding=venmo&merchant-id=${this.merchantId}&components=buttons,funding-eligibility`);
+    await this.$loadScript(`https://www.paypal.com/sdk/js?integration-date=2022-10-16&client-id=${process.env.VUE_APP_PAYPAL_ID}&currency=USD&disable-funding=credit&enable-funding=venmo${this.merchantId}&components=buttons,funding-eligibility`);
     this.createButton();
   }
 
   private get merchantId(): string {
-    return process.env.VUE_APP_PAYPAL_ENV === 'LIVE'
-      ? process.env.VUE_APP_MERCHANT_ID || ''
+    const id = process.env.VUE_APP_PAYPAL_ENV === 'LIVE'
+      ? process.env.VUE_APP_PAYPAL_PRODUCTION_ID || ''
       : process.env.VUE_APP_SANDBOX_ID || '';
+
+    if (id) {
+      return `&merchant-id=${id}`;
+    }
+
+    return '';
   }
 }
 </script>

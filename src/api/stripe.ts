@@ -42,6 +42,7 @@ export interface StripeSession {
     data: StripeLineItem[];
   };
   payment_intent: StripePaymentIntent;
+  submit_type: string;
 }
 
 export interface CreateStripeSessionRequest {
@@ -52,8 +53,40 @@ export interface CreateStripeSessionRequest {
   useGift: string;
 }
 
+export interface CreateStripeDepositSessionRequest {
+  date: string;
+  time: string;
+  priceId: string;
+  tripLength: number;
+  tripType: string;
+  estimated: number;
+}
+
+export interface DepositSearchResult {
+  id: string;
+  description: string;
+  metadata: {
+    date: string;
+    time: string;
+    length: string;
+  };
+}
+
 export function getSession(id: string): Request {
   return new Request(`${BASEURL}/stripe/${id}`);
+}
+
+export function createDepositSession(req: CreateStripeDepositSessionRequest): Request {
+  return new Request(`${BASEURL}/deposit/stripe`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-calendar-origin': (parent !== window) ? window.parent.location.href : window.location.href,      
+    },
+    mode: 'cors',
+    cache: 'no-cache',
+    body: JSON.stringify(req),
+  });
 }
 
 export function createSession(req: CreateStripeSessionRequest): Request {
@@ -67,6 +100,18 @@ export function createSession(req: CreateStripeSessionRequest): Request {
     cache: 'no-cache',
     body: JSON.stringify(req),
   });
+}
+
+export function searchDeposits(yearmonth: string): Request {
+  return new Request(`${BASEURL}/deposits/${yearmonth}`, {
+    method: 'GET',
+    mode: 'cors',
+    cache: 'no-cache'
+  });
+}
+
+export function getDeposits(year: number, month: number): Request {
+  return new Request(`${BASEURL}/deposits?year=${year}&month=${String(month+1).padStart(2, '0')}`);
 }
 
 export interface RefundInfo {
@@ -127,4 +172,32 @@ export function redeemGiftCard(req: Redemption): Request {
     cache: 'no-cache',
     body: JSON.stringify(req),
   });
+}
+
+export function saveManualDeposit(req: any): Request {
+  return new Request(`${BASEURL}/deposits/manual`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    mode: 'cors',
+    cache: 'no-cache',
+    body: JSON.stringify(req),
+  });
+}
+
+export function deleteManualDeposit(req: any): Request {
+  return new Request(`${BASEURL}/deposits/manual`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    mode: 'cors',
+    cache: 'no-cache',
+    body: JSON.stringify(req),
+  });
+}
+
+export function listManualDeposits(): Request {
+  return new Request(`${BASEURL}/deposits/manual`);
 }
